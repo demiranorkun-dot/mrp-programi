@@ -1,0 +1,1356 @@
+<title>PlanPres</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: ERP shell — dark machine-room sidebar, light working surface, dense tables, Gantt as the hero view */
+:root{
+  --bg:#F2F4F6; --surface:#FFFFFF; --surface-2:#F7F9FA; --ink:#15202B; --muted:#5A6774; --line:#DCE2E7;
+  --side:#14283A; --side-2:#1C3549; --side-ink:#C4D2DE; --side-muted:#7F95A8;
+  --accent:#1E6BAE; --accent-ink:#FFFFFF; --accent-soft:#E3EEF8;
+  --amber:#E8A317; --amber-ink:#1F1600;
+  --ok:#1D8556; --ok-bg:#E1F3EA; --warn:#B86E00; --warn-bg:#FCEFD9; --bad:#C2352B; --bad-bg:#FBE4E2;
+  --m-pp:#2F7FC1; --m-abs:#E07A1F; --m-pa:#7B57C2; --m-hdpe:#2E9A62; --m-x1:#B8466B; --m-x2:#5F7D8C;
+  --hatch:#C9D1D8;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+  --f-display:"Barlow Semi Condensed","Barlow","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0D141B; --surface:#152029; --surface-2:#1A2731; --ink:#E2E9EF; --muted:#94A4B2; --line:#26343F;
+  --side:#09111A; --side-2:#132230; --side-ink:#C4D2DE; --side-muted:#71879A;
+  --accent:#5DA5E6; --accent-ink:#06121D; --accent-soft:#16334B;
+  --amber:#F2B530; --amber-ink:#1F1600;
+  --ok:#47C487; --ok-bg:#12352A; --warn:#EBA43D; --warn-bg:#3A2A10; --bad:#F06C60; --bad-bg:#3D1A18;
+  --m-pp:#5AA1DE; --m-abs:#F0954A; --m-pa:#A386E0; --m-hdpe:#4FBE84; --m-x1:#DB6E92; --m-x2:#86A3B1;
+  --hatch:#34434F; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D141B; --surface:#152029; --surface-2:#1A2731; --ink:#E2E9EF; --muted:#94A4B2; --line:#26343F;
+  --side:#09111A; --side-2:#132230; --side-ink:#C4D2DE; --side-muted:#71879A;
+  --accent:#5DA5E6; --accent-ink:#06121D; --accent-soft:#16334B;
+  --amber:#F2B530; --amber-ink:#1F1600;
+  --ok:#47C487; --ok-bg:#12352A; --warn:#EBA43D; --warn-bg:#3A2A10; --bad:#F06C60; --bad-bg:#3D1A18;
+  --m-pp:#5AA1DE; --m-abs:#F0954A; --m-pa:#A386E0; --m-hdpe:#4FBE84; --m-x1:#DB6E92; --m-x2:#86A3B1;
+  --hatch:#34434F; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--side)}
+*{box-sizing:border-box}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num,.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:.86em}
+
+.shell{display:grid;grid-template-columns:224px minmax(0,1fr);min-height:100%}
+.side{background:var(--side);color:var(--side-ink);padding-block:18px;display:flex;flex-direction:column;gap:18px;position:sticky;top:env(safe-area-inset-top,0px);height:calc(100vh - env(safe-area-inset-top,0px));padding-left:max(0px,env(safe-area-inset-left,0px))}
+.brand{display:flex;align-items:center;gap:10px;padding:0 18px}
+.brand-mark{width:30px;height:30px;border-radius:6px;background:var(--amber);display:grid;place-items:center;color:var(--amber-ink);font-family:var(--f-display);font-weight:700;font-size:15px}
+.brand-name{font-family:var(--f-display);font-weight:700;font-size:21px;letter-spacing:.02em;color:#fff}
+.brand-sub{font-size:11px;color:var(--side-muted);letter-spacing:.08em;text-transform:uppercase}
+.nav{display:flex;flex-direction:column;gap:2px;padding:0 10px}
+.nav-group{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--side-muted);padding:12px 10px 4px}
+.nav button{all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--side-ink);font-weight:500;font-size:14.5px}
+.nav button:hover{background:var(--side-2);color:#fff}
+.nav button[aria-current="page"]{background:var(--side-2);color:#fff;box-shadow:inset 3px 0 0 var(--amber)}
+.nav button:focus-visible{outline:2px solid var(--amber)}
+.nav svg{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.nav .count{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--side-muted)}
+.side-foot{margin-top:auto;padding:0 18px;font-size:12px;color:var(--side-muted)}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line);padding-block:12px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.crumb{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.page-title{font-family:var(--f-display);font-weight:700;font-size:24px;line-height:1.1;margin:0;text-wrap:balance}
+.top-actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chip-demo{font-size:12px;font-weight:600;padding:4px 9px;border-radius:999px;background:var(--warn-bg);color:var(--warn)}
+.content{padding-block:22px 48px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);padding:7px 13px;border-radius:6px;cursor:pointer;font-weight:600;font-size:14px}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{filter:brightness(1.08);color:var(--accent-ink)}
+.btn-plan{background:var(--amber);border-color:var(--amber);color:var(--amber-ink);font-family:var(--f-display);font-size:16px;letter-spacing:.03em;padding:7px 16px}
+.btn-plan:hover{filter:brightness(1.06);color:var(--amber-ink);border-color:var(--amber)}
+.btn-danger{color:var(--bad);border-color:var(--bad)}
+.btn-danger:hover{background:var(--bad);color:#fff;border-color:var(--bad)}
+.btn-ghost{border-color:transparent;background:transparent}
+.btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;min-width:0}
+.panel-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.panel-title{font-family:var(--f-display);font-weight:700;font-size:17px;margin:0}
+.panel-sub{font-size:13px;color:var(--muted)}
+.panel-body{padding:16px}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto}
+.search{border:1px solid var(--line);background:var(--surface-2);border-radius:6px;padding:6px 10px;width:200px;max-width:100%}
+
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.kpis.kpis-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g-bar.short{box-shadow:inset 0 -5px 0 var(--amber)}
+tr.mrp-detail>td{background:var(--surface-2);padding:8px 12px 12px;white-space:normal}
+tr.mrp-detail table{background:var(--surface);border:1px solid var(--line);border-radius:6px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.kpi-label{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi-val{font-family:var(--f-display);font-weight:700;font-size:30px;line-height:1}
+.kpi-foot{font-size:12.5px;color:var(--muted)}
+.kpi.is-bad .kpi-val{color:var(--bad)}
+.grid-2{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px}
+
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap;position:sticky;top:0}
+td{padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--surface-2)}
+td.r,th.r{text-align:right}
+tr.clickable{cursor:pointer}
+.code{font-family:var(--f-mono);font-size:13px;font-weight:500}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill-ok{background:var(--ok-bg);color:var(--ok)}
+.pill-warn{background:var(--warn-bg);color:var(--warn)}
+.pill-bad{background:var(--bad-bg);color:var(--bad)}
+.mat{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px}
+.mat i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.mchip{display:inline-block;font-family:var(--f-mono);font-size:11.5px;padding:1px 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);margin-right:3px}
+.sel{border:1px solid var(--line);background:var(--surface);border-radius:5px;padding:4px 6px;font-size:13.5px}
+.sel.override{border-color:var(--amber);box-shadow:inset 3px 0 0 var(--amber)}
+
+.load-list{display:flex;flex-direction:column;gap:10px}
+.load-row{display:grid;grid-template-columns:64px minmax(0,1fr) 52px;align-items:center;gap:10px;font-size:13.5px}
+.load-bar{height:14px;background:var(--surface-2);border:1px solid var(--line);border-radius:3px;position:relative;overflow:hidden}
+.load-bar span{position:absolute;inset:0 auto 0 0;border-radius:2px}
+.load-bar .limit{position:absolute;top:-2px;bottom:-2px;width:0;border-left:2px dashed var(--muted);left:85%}
+
+.gantt-wrap{overflow-x:auto}
+.gantt{position:relative;min-width:max-content}
+.g-head,.g-row{display:flex}
+.mode{font-size:12.5px;font-weight:600;color:var(--muted)}.mode.is-r{color:var(--accent)}.mode.is-o{color:var(--warn)}
+.g-label{width:132px;flex:none;position:sticky;left:0;background:var(--surface);z-index:2;border-right:1px solid var(--line);padding:0 12px;display:flex;flex-direction:column;justify-content:center}
+.g-head .g-label{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);height:44px}
+.g-days{display:flex}
+.g-day{flex:none;border-left:1px solid var(--line);height:44px;font-size:11px;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2}
+.g-day b{font-family:var(--f-mono);font-weight:500;color:var(--ink);font-size:11.5px}
+.g-day.today{background:var(--accent-soft)}
+.g-row{border-top:1px solid var(--line);height:52px}
+.g-row .g-label b{font-family:var(--f-mono);font-size:13.5px}
+.g-row .g-label span{font-size:11.5px;color:var(--muted)}
+.g-track{position:relative;flex:none;background-image:linear-gradient(to right,var(--line) 1px,transparent 1px)}
+.g-bar{position:absolute;top:9px;height:34px;border-radius:4px;color:#fff;font-size:11.5px;font-weight:600;padding:2px 6px;overflow:hidden;white-space:nowrap;line-height:1.25;cursor:default;box-shadow:inset 0 -2px 0 rgba(0,0,0,.18)}
+.g-bar small{display:block;font-weight:500;opacity:.9;font-family:var(--f-mono);font-size:10.5px}
+.g-bar{border:0;text-align:left;font-family:inherit;cursor:grab;touch-action:none;user-select:none}
+.g-bar.dragging{opacity:.3}
+.g-bar.run{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.22) 0 6px,transparent 6px 12px);cursor:default}
+.g-wait{position:absolute;top:13px;height:26px;border:1.5px dashed var(--bad);border-radius:3px;background:var(--bad-bg)}
+.run-edit{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-block:10px;border-bottom:1px solid var(--line)}
+.run-label{font-weight:700;font-size:13.5px}
+.run-chip{background:var(--ok-bg);color:var(--ok)}
+.g-bar.ghost{position:fixed;z-index:80;pointer-events:none;opacity:.92;cursor:grabbing;box-shadow:0 8px 20px rgba(0,0,0,.3);top:0;left:0}
+.g-row.drop .g-track{background-color:var(--accent-soft)}
+.g-drop{position:absolute;top:5px;bottom:5px;width:3px;border-radius:2px;background:var(--ink);z-index:5;pointer-events:none}
+.btn-sm{padding:3px 9px;font-size:12.5px}
+.rc-wrap{overflow-x:auto}
+.rc-head,.rc-row{display:grid;grid-template-columns:minmax(150px,auto) 130px minmax(160px,1fr) 150px 150px;gap:12px;align-items:center;padding:8px 16px;border-bottom:1px solid var(--line);font-size:14px;min-width:720px}
+.rc-head{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--surface-2);font-weight:600}
+.rc-row:last-child{border-bottom:0}
+.rc-q,.rc-t{text-align:right}
+.rc-name{color:var(--muted);font-size:13.5px}
+.rc-cat{font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;justify-self:start;white-space:nowrap}
+.rc-yari{background:var(--accent-soft);color:var(--accent)}.rc-hm{background:var(--ok-bg);color:var(--ok)}.rc-boya{background:var(--bad-bg);color:var(--bad)}
+.rc-bag{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}.rc-amb{background:var(--warn-bg);color:var(--warn)}.rc-etk{background:var(--warn-bg);color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn)}.rc-dig{background:var(--surface-2);color:var(--muted)}
+details.fam>summary{cursor:pointer;list-style:none}
+details.fam>summary::-webkit-details-marker{display:none}
+details.fam>summary::after{content:"▾";margin-left:auto;color:var(--muted);font-size:16px}
+details.fam:not([open])>summary{border-bottom:0}
+.fam-toggle{display:inline-flex;gap:6px;align-items:center;font-weight:600;font-size:13.5px;cursor:pointer;white-space:nowrap}
+.g-bar.late{outline:2px solid var(--bad);outline-offset:-2px}
+.g-bar.sel{outline:3px solid var(--ink);outline-offset:1px;z-index:3}
+.g-row.is-sel .g-label{background:var(--accent-soft)}
+.g-label[data-pick]{cursor:pointer}
+tr.row-sel td{background:var(--accent-soft)!important;font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:6px 12px;font-weight:600;font-size:13.5px;cursor:pointer;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.g-co{position:absolute;top:15px;height:22px;background:repeating-linear-gradient(135deg,var(--hatch) 0 3px,transparent 3px 6px);border-radius:2px}
+.g-now{position:absolute;top:0;bottom:0;border-left:2px solid var(--accent);z-index:2;pointer-events:none}
+.g-horizon{position:absolute;top:0;bottom:0;border-left:2px dashed var(--bad);z-index:1;pointer-events:none}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);align-items:center}
+.legend .sw{width:14px;height:10px;border-radius:2px;display:inline-block;margin-right:5px;vertical-align:-1px}
+
+.modal-bg{position:fixed;inset:0;background:rgba(8,15,22,.5);z-index:50;display:grid;place-items:center;padding:16px}
+.modal{background:var(--surface);border-radius:10px;border:1px solid var(--line);width:min(560px,100%);max-height:calc(100vh - 40px);overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center}
+.modal-head h2{font-family:var(--f-display);font-size:20px;margin:0}
+.modal-body{padding:18px 20px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-size:12.5px;font-weight:600;color:var(--muted)}
+.field input,.field select,.field textarea{border:1px solid var(--line);background:var(--surface-2);border-radius:6px;padding:8px 10px;width:100%}
+.field textarea{min-height:140px;font-family:var(--f-mono);font-size:12.5px}
+.hint{font-size:12.5px;color:var(--muted)}
+.checks{display:flex;flex-wrap:wrap;gap:6px}
+.checks label{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:5px;padding:4px 8px;font-family:var(--f-mono);font-size:12.5px;color:var(--ink);cursor:pointer}
+.checks input{width:auto}
+.err{color:var(--bad);font-size:13px}
+
+.toast{position:fixed;right:max(20px,env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:7px;font-weight:600;font-size:14px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.note{font-size:13px;color:var(--muted);max-width:68ch}
+
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:820px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .side{position:sticky;top:env(safe-area-inset-top,0px);height:auto;z-index:25;flex-direction:row;align-items:center;padding-block:8px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));gap:10px;overflow:hidden}
+  .brand{padding:0}.brand-sub,.side-foot,.nav-group,.nav .count{display:none}
+  .brand-name{font-size:18px}
+  .nav{flex-direction:row;overflow-x:auto;padding:0;gap:4px;scrollbar-width:none;min-width:0}
+  .nav button{white-space:nowrap;padding:7px 10px;font-size:13.5px}
+  .nav button[aria-current="page"]{box-shadow:inset 0 -3px 0 var(--amber)}
+  .top{position:static;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .content{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .settings-grid,.modal-body{grid-template-columns:minmax(0,1fr)}
+  .search{width:150px}
+}
+@media (prefers-reduced-motion:no-preference){.g-bar{transition:filter .15s}.g-bar:hover{filter:brightness(1.1)}}
+
+/* ---- Yönetim paneli ---- */
+.dash-filters .df-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.dash-filters .field{min-width:130px;flex:1 1 140px}
+.dash-filters .df-act{flex:0 0 auto;min-width:0}
+.df-note{padding:0 16px 12px}
+details.gaps>summary{cursor:pointer;list-style:none}
+details.gaps>summary::-webkit-details-marker{display:none}
+details.gaps>summary::after{content:"\25BE";margin-left:auto;color:var(--muted);font-size:16px}
+details.gaps:not([open])>summary{border-bottom:0}
+.gap{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:12px;align-items:start;padding:10px 16px;border-top:1px solid var(--line)}
+.gap:first-child{border-top:0}
+.gap-t .hint{margin-top:2px}
+.pill-info{background:var(--accent-soft);color:var(--accent)}
+.kpi.is-muted .kpi-val{color:var(--muted);font-size:22px;line-height:30px}
+.dash-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}
+.dash-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.span2{grid-column:1/-1}
+.ch-sub{font-family:var(--f-display);font-size:14.5px;font-weight:700;margin:16px 0 8px}
+.ch-sub:first-child{margin-top:0}
+.ch-box{width:100%;min-height:30px;min-width:0}
+.ch-box svg{display:block;max-width:100%}
+.ch-grid{stroke:var(--line);stroke-width:1}
+.ch-base{stroke:var(--muted);stroke-width:1}
+.ch-ax{fill:var(--muted);font-size:11px;font-family:var(--f-mono)}
+.ch-mark{stroke:var(--surface);stroke-width:1}
+.ch-hit:hover{fill:var(--ink);fill-opacity:.05}
+.ch-click{cursor:pointer}
+.ch-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:4px 0 8px}
+.ch-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.ch-tip{position:fixed;z-index:90;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:12.5px;line-height:1.5;box-shadow:0 8px 24px rgba(0,0,0,.18);pointer-events:none;max-width:290px}
+.ch-tip .t-h{font-weight:700;margin-bottom:3px}
+.ch-tip .t-f{color:var(--muted)}
+.ch-tip i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
+.ch-tip b{font-family:var(--f-mono);font-weight:500;font-variant-numeric:tabular-nums}
+.hb{display:flex;flex-direction:column;gap:4px}
+.hb-row{display:grid;grid-template-columns:minmax(90px,170px) minmax(0,1fr) auto;gap:10px;align-items:center;padding:4px 6px;border-radius:5px}
+.hb-row.ch-click:hover,.hb-row.ch-click:focus-visible{background:var(--surface-2)}
+.hb-label{display:flex;flex-direction:column;min-width:0}
+.hb-label small{color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb-track{position:relative;height:14px;display:flex;gap:2px;min-width:0}
+.hb-seg{display:block;height:100%;min-width:2px}
+.hb-seg:last-child{border-radius:0 4px 4px 0}
+.hb-track.grp{flex-direction:column;height:auto;gap:3px}
+.hb-line{display:block;height:7px}
+.hb-line .hb-seg{border-radius:0 3px 3px 0}
+.hb-ref{position:absolute;top:-4px;bottom:-4px;border-left:2px dashed var(--ink);opacity:.5}
+.hb-val{font-size:12.5px;white-space:nowrap;text-align:right}
+.ch-empty{display:flex;flex-direction:column;gap:6px;align-items:flex-start;padding:16px;border:1px dashed var(--line);border-radius:8px;background:var(--surface-2)}
+.ch-empty span{color:var(--muted);font-size:13.5px;max-width:62ch}
+.ch-ok{padding:10px 0}
+.ch-split{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:20px}
+.oee{display:flex;flex-direction:column;gap:8px}
+.oee-t{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:13px}
+.oee-t b{font-family:var(--f-mono);font-weight:500}
+.oee-main b{font-family:var(--f-display);font-size:22px;font-weight:700}
+.ch-table{margin-top:12px;font-size:13px}
+.ch-table summary{cursor:pointer;color:var(--accent);font-weight:600;padding:4px 0}
+.cost-cov{padding:10px 12px;background:var(--surface-2);border-radius:6px;margin-bottom:12px}
+@media (max-width:1100px){.dash-grid,.ch-split{grid-template-columns:minmax(0,1fr)}.dash-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:820px){.dash-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.gap{grid-template-columns:minmax(0,1fr)}.hb-row{grid-template-columns:88px minmax(0,1fr) auto}}
+</style>
+
+<div class="shell">
+  <aside class="side">
+    <div class="brand">
+      <div class="brand-mark">PP</div>
+      <div><div class="brand-name">PlanPres</div><div class="brand-sub">Enjeksiyon planlama</div></div>
+    </div>
+    <nav class="nav" id="nav" aria-label="Ana menü"></nav>
+    <div class="side-foot" id="sideFoot"></div>
+  </aside>
+  <div class="main">
+    <header class="top">
+      <div>
+        <div class="crumb" id="crumb"></div>
+        <h1 class="page-title" id="title"></h1>
+      </div>
+      <div class="top-actions">
+        <span class="chip-demo" id="demoChip" hidden>Örnek veri</span>
+        <button class="btn btn-plan" id="planBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 9-14 9V3z"/></svg>Planla
+        </button>
+      </div>
+    </header>
+    <main class="content" id="view"></main>
+  </div>
+</div>
+<div id="modalRoot"></div>
+<div class="toast" id="toast" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+(function(){
+"use strict";
+const KEY="planpres-v1";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nf0=new Intl.NumberFormat("tr-TR",{maximumFractionDigits:0});
+const nf1=new Intl.NumberFormat("tr-TR",{minimumFractionDigits:1,maximumFractionDigits:1});
+const pct=v=>nf0.format(Math.round(v*100))+"%";
+const nfQ=new Intl.NumberFormat("tr-TR",{maximumFractionDigits:4});
+const CATS=["Yarı mamul","Hammadde","Boya","Bağlantı elemanı","Ambalaj","Etiket","Diğer"];
+const catFromText=t=>{t=String(t||"").toLocaleLowerCase("tr").replace(/ı/g,"i").replace(/ş/g,"s").replace(/ğ/g,"g").replace(/ç/g,"c").replace(/ü/g,"u").replace(/ö/g,"o");
+  if(/civata|somun|vida|pul\b|rondela|percin|saplama|klips|pim\b|baglanti|insert/.test(t))return"Bağlantı elemanı";
+  if(/poset|koli|kutu|ambalaj|strec|bant\b|naylon|karton|palet|viyol|separat|cuval/.test(t))return"Ambalaj";
+  if(/etiket|barkod/.test(t))return"Etiket";
+  if(/boya|masterbatch|^mb|pigment/.test(t))return"Boya";
+  if(/^hm[.\- ]|hammadde|granul|polipro|^abs|^pa6|hdpe|ldpe|polikarbonat/.test(t))return"Hammadde";
+  if(/yari ?mamul|^uretim/.test(t))return"Yarı mamul";return""};
+const inferCat=o=>catFromText(`${o.part||""} ${o.name||""}`)||((typeof S!=="undefined"&&S.molds.some(k=>k.part===o.part))||/-\d+$/.test(String(o.part||"").trim())?"Yarı mamul":"");
+const catOf=b=>b.cat||(b.type==="Satınalma"?(inferCat(b)!=="Yarı mamul"&&inferCat(b))||"Diğer":"Yarı mamul");
+const isProd=b=>catOf(b)==="Yarı mamul";
+const defUnit=b=>{const c=catOf(b);return c==="Hammadde"||c==="Boya"?"kg":"adet"};
+const catKey=c=>({"Yarı mamul":"yari","Hammadde":"hm","Boya":"boya","Bağlantı elemanı":"bag","Ambalaj":"amb","Etiket":"etk"})[c]||"dig";
+const uid=()=>Math.random().toString(36).slice(2,10);
+const iso=d=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)};
+const parseISO=s=>{const [y,m,d]=String(s).split("-").map(Number);return new Date(y,(m||1)-1,d||1)};
+const fmtD=s=>{if(!s)return"–";const d=typeof s==="string"?parseISO(s):s;return d.toLocaleDateString("tr-TR",{day:"2-digit",month:"2-digit",year:"numeric"})};
+const fmtDs=d=>d.toLocaleDateString("tr-TR",{day:"2-digit",month:"2-digit"});
+const fmtDT=d=>d&&!isNaN(d)?d.toLocaleDateString("tr-TR",{day:"2-digit",month:"2-digit"})+" "+d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"}):"–";
+const num=v=>{if(typeof v==="number")return v;const s=String(v??"").trim().replace(/\s/g,"").replace("%","");if(!s)return NaN;
+  const t=s.includes(",")?s.replace(/\./g,"").replace(",","."):(/^-?\d{1,3}(\.\d{3})+$/.test(s)?s.replace(/\./g,""):s);return Number(t)};
+
+function today(){return iso(new Date())}
+function demo(){
+  const M=(code,ton,robot)=>({id:uid(),code,ton,shifts:3,hours:7.5,eff:0.85,robot:robot?"Var":"Yok"});
+  const K=(code,part,cav,cycle,partG,runnerG,mat,mb,machines,mode)=>({id:uid(),code,part,cav,cycle,partG,runnerG,mat,mb,machines:machines.split(","),mode:mode||"Otomatik"});
+  const B=(product,part,qty,type)=>({id:uid(),product,part,qty,type});
+  const O=(no,customer,product,qty,dueOff,extra,prio)=>{const d=new Date();d.setDate(d.getDate()+dueOff);return{id:uid(),no,customer,product,qty,due:iso(d),extra,prio}};
+  return{demo:true,settings:{horizon:22,start:"",bonus:2,changeover:2,saturday:false,robotPay:1},
+    machines:[M("M01",120),M("M02",150),M("M03",200,1),M("M04",250),M("M05",300,1),M("M06",350,1),M("M07",450,1),M("M08",560,1)],
+    molds:[K("K-101","U100-1",4,28,18,6,"PP",.02,"M01,M02,M03"),K("K-102","U100-2",2,35,42,8,"PP",.02,"M02,M03,M04"),
+      K("K-103","U200-1",1,55,320,25,"ABS",0,"M05,M06","Robotlu"),K("K-104","U200-2",8,22,6,10,"ABS",0,"M01,M02"),
+      K("K-105","U300-1",2,60,610,40,"PP",.02,"M07,M08","Robotlu"),K("K-106","U300-2",4,30,35,12,"PA6",0,"M03,M04,M05","Operatörlü"),
+      K("K-107","U400-1",16,18,2.5,8,"HDPE",.02,"M01,M02,M03"),K("K-108","U400-2",1,75,1150,60,"PP",0,"M08","Robotlu"),
+      K("K-109","U500-1",2,45,140,18,"ABS",0,"M04,M05,M06","Robotlu"),K("K-110","U500-2",4,25,22,9,"PP",.02,"M01,M02,M03"),
+      K("K-111","U600-1",2,40,95,14,"PA6",0,"M04,M05,M06"),K("K-112","U600-2",8,20,4,7,"HDPE",.02,"M02,M03")],
+    bom:[B("U100","U100-1",1,"Üretim"),B("U100","U100-2",2,"Üretim"),B("U100","VIDA-M4",4,"Satınalma"),
+      B("U200","U200-1",1,"Üretim"),B("U200","U200-2",4,"Üretim"),B("U200","ETIKET-01",1,"Satınalma"),
+      B("U300","U300-1",1,"Üretim"),B("U300","U300-2",2,"Üretim"),B("U400","U400-1",6,"Üretim"),B("U400","U400-2",1,"Üretim"),
+      B("U500","U500-1",1,"Üretim"),B("U500","U500-2",2,"Üretim"),B("U500","VIDA-M4",2,"Satınalma"),
+      B("U600","U600-1",1,"Üretim"),B("U600","U600-2",4,"Üretim"),
+      ...["U100","U200","U300","U400","U500","U600"].flatMap(p=>[
+        {id:uid(),product:p,part:"POSET-20x30",name:"Poşet 20x30",cat:"Ambalaj",qty:1,unit:"adet",scrap:.02},
+        {id:uid(),product:p,part:"KOLI-40",name:"Koli 40x30x30 (50'li)",cat:"Ambalaj",qty:.02,unit:"adet"},
+        {id:uid(),product:p,part:"ETIKET-KOLI",name:"Koli etiketi",cat:"Etiket",qty:.02,unit:"adet"}]),
+      {id:uid(),product:"U300",part:"CIVATA-M5x16",name:"Cıvata M5x16",cat:"Bağlantı elemanı",qty:2,unit:"adet",scrap:.01},
+      {id:uid(),product:"U300",part:"SOMUN-M5",name:"Somun M5",cat:"Bağlantı elemanı",qty:2,unit:"adet",scrap:.01}],
+    orders:[O("SP-001","Müşteri A","U100",12000,25,.10,1),O("SP-002","Müşteri B","U200",4000,20,0,1),
+      O("SP-003","Müşteri C","U100",10000,41,.05,2),O("SP-004","Müşteri A","U300",6000,35,.15,2),
+      O("SP-005","Müşteri D","U400",9000,30,0,1),O("SP-006","Müşteri B","U300",5000,50,.10,3),
+      O("SP-007","Müşteri E","U500",18000,38,.05,2),O("SP-008","Müşteri C","U600",14000,45,0,2),
+      O("SP-009","Müşteri D","U200",3000,52,0,3)],
+    materials:[
+      {id:uid(),code:"PP",name:"Polipropilen homopolimer",mtype:"Hammadde",stock:15000,incoming:8000,incomingDate:"",lead:10,safety:2000,moq:5000},
+      {id:uid(),code:"ABS",name:"ABS genel amaçlı",mtype:"Hammadde",stock:8000,incoming:0,incomingDate:"",lead:7,safety:500,moq:1000},
+      {id:uid(),code:"PA6",name:"Poliamid 6",mtype:"Hammadde",stock:1200,incoming:1500,incomingDate:(()=>{const d=new Date();d.setDate(d.getDate()+6);return iso(d)})(),lead:14,safety:300,moq:1000},
+      {id:uid(),code:"HDPE",name:"Yüksek yoğunluklu PE",mtype:"Hammadde",stock:900,incoming:0,incomingDate:"",lead:7,safety:200,moq:500},
+      {id:uid(),code:"VIDA-M4",name:"M4 vida",mtype:"Bağlantı elemanı",stock:150000,incoming:0,incomingDate:"",lead:10,safety:10000,moq:0},
+      {id:uid(),code:"ETIKET-01",name:"Ürün etiketi",mtype:"Etiket",stock:3000,incoming:0,incomingDate:"",lead:3,safety:500,moq:5000},
+      {id:uid(),code:"POSET-20x30",name:"Poşet 20x30",mtype:"Ambalaj",stock:40000,incoming:0,incomingDate:"",lead:7,safety:5000,moq:10000},
+      {id:uid(),code:"KOLI-40",name:"Koli 40x30x30",mtype:"Ambalaj",stock:300,incoming:500,incomingDate:"",lead:5,safety:100,moq:500},
+      {id:uid(),code:"CIVATA-M5x16",name:"Cıvata M5x16",mtype:"Bağlantı elemanı",stock:30000,incoming:0,incomingDate:"",lead:10,safety:5000,moq:10000}],
+    overrides:{}};
+}
+let S;
+function load(){try{const t=localStorage.getItem(KEY);if(t){S=JSON.parse(t);return}}catch(e){}S=demo()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+load();
+
+/* ---------- planning engine ---------- */
+const netHours=m=>(+m.shifts||0)*(+m.hours||0)*(+m.eff||0);
+const hasRobot=m=>!!m&&(m.robot===true||m.robot==="Var");
+function workDays(start,count,sat){const out=[];const d=parseISO(start);while(out.length<count){const w=d.getDay();if(w!==0&&(sat||w!==6))out.push(new Date(d));d.setDate(d.getDate()+1)}return out}
+function compute(){
+  const st=S.settings, start=st.start||today();
+  const mbr=k=>(+k.mb>0)?+k.mb:(String(k.mbCode||"").trim()?(st.mbDefault==null?0.02:+st.mbDefault):0);
+  const prod={};const excl=String(st.exclude||"").split(/[,;\s]+/).filter(Boolean).map(x=>x.toUpperCase());
+  for(const o of S.orders){if(excl.some(p=>String(o.product).toUpperCase().startsWith(p)))continue;
+    const q=Math.ceil((+o.qty||0)*(1+(+o.extra||0)));if(!prod[o.product])prod[o.product]={gross:0,qty:0,due:null,stock:0};const P=prod[o.product];P.gross+=q;
+    if(o.stock!==""&&o.stock!=null)P.stock=Math.max(P.stock,+o.stock||0);
+    if(o.due&&(!P.due||o.due<P.due))P.due=o.due}
+  for(const P of Object.values(prod))P.qty=st.useStock===false?P.gross:Math.max(0,P.gross-P.stock);
+  // multi-level recipe explosion: semi-finished parts go to molding (or further down), everything else is bought
+  const parts={},buy={},bomBy={};S.bom.forEach(b=>{(bomBy[b.product]=bomBy[b.product]||[]).push(b)});
+  const molded=new Set(S.molds.map(k=>k.part));
+  const put=(tgt,b,n,due,root)=>{const e=tgt[b.part]=tgt[b.part]||{need:0,due:null,products:new Set(),byProd:{},cat:catOf(b),unit:b.unit||defUnit(b),name:b.name||""};
+    e.need+=n;e.products.add(root);e.byProd[root]=(e.byProd[root]||0)+n;if(due&&(!e.due||due<e.due))e.due=due};
+  const explode=(pc,qty,due,root,depth)=>{for(const b of bomBy[pc]||[]){const n=qty*(+b.qty||0)*(1+(+b.scrap||0));if(!(n>0))continue;
+    if(isProd(b)){if(molded.has(b.part)||!bomBy[b.part])put(parts,b,n,due,root);if(bomBy[b.part]&&depth<6)explode(b.part,n,due,root,depth+1)}
+    else put(buy,b,n,due,root)}};
+  for(const [pc,p] of Object.entries(prod)){if(p.qty&&bomBy[pc])explode(pc,p.qty,p.due,pc,0)}
+  const bomProducts=new Set(S.bom.map(b=>b.product));const unmatched=[];let autoLinked=0;
+  const addPart=(pc,part,n,due)=>{if(!parts[part])parts[part]={need:0,due:null,products:new Set()};parts[part].need+=n;parts[part].products.add(pc);if(due&&(!parts[part].due||due<parts[part].due))parts[part].due=due};
+  for(const [pc,p] of Object.entries(prod)){if(bomProducts.has(pc)||!p.qty)continue;
+    if(S.molds.some(k=>k.part===pc)){addPart(pc,pc,p.qty,p.due);continue}
+    if(st.autoBom!==false){const re=new RegExp("^"+String(pc).replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"-\\d+$");const subs=[...new Set(S.molds.filter(k=>re.test(k.part)).map(k=>k.part))];
+      if(subs.length){subs.forEach(s=>addPart(pc,s,p.qty,p.due));autoLinked++;continue}}
+    unmatched.push(pc)}
+  const mByCode={};S.machines.forEach(m=>mByCode[m.code]=m);
+  const jobs=[];const missing=[];
+  for(const [part,v] of Object.entries(parts)){
+    const mold=S.molds.find(k=>k.part===part);
+    if(!mold){missing.push(part);continue}
+    const rate=(+mold.cycle>0)?3600/(+mold.cycle)*(+mold.cav||1):0;
+    const hrs=rate?v.need/rate:0; const gPer=(+mold.partG||0)+(+mold.runnerG||0)/(+mold.cav||1);
+    const kg=v.need*gPer/1000;
+    jobs.push({part,key:part,mold,need:v.need,due:v.due,products:[...v.products],rate,hrs,mat:mold.mat,kgMain:kg*(1-mbr(mold)),kgMb:kg*mbr(mold),needR:mold.mode==="Robotlu",listed:(mold.machines||[]).filter(c=>mByCode[c])});
+    const jj=jobs[jobs.length-1];jj.compat=jj.listed.filter(c=>!jj.needR||hasRobot(mByCode[c]));
+  }
+  // family molds: parts from one mold are pressed together as one job
+  const fam=S.family||{};const byCode={};jobs.forEach(j=>{const c=String(j.mold.code);if(fam[c])(byCode[c]=byCode[c]||[]).push(j)});
+  for(const [c,g] of Object.entries(byCode)){if(g.length<2)continue;const f=g[0];
+    let inter=f.compat.filter(x=>g.every(j=>j.compat.includes(x)));if(!inter.length)inter=[...new Set(g.flatMap(j=>j.compat))];
+    const mj={...f,part:g.map(j=>j.part).join(" + "),key:"FAM:"+c,family:true,members:g.map(j=>({part:j.part,need:j.need,rate:j.rate})),
+      need:Math.max(...g.map(j=>j.need)),hrs:Math.max(...g.map(j=>j.hrs)),kgMain:g.reduce((a,j)=>a+j.kgMain,0),kgMb:g.reduce((a,j)=>a+j.kgMb,0),
+      due:g.map(j=>j.due).filter(Boolean).sort()[0]||null,products:[...new Set(g.flatMap(j=>j.products))],needR:g.some(j=>j.needR),compat:inter,listed:[...new Set(g.flatMap(j=>j.listed))]};
+    for(const j of g)jobs.splice(jobs.indexOf(j),1);jobs.push(mj)}
+  jobs.sort((a,b)=>(a.due||"9").localeCompare(b.due||"9")||b.hrs-a.hrs);
+  const load={},mats={};S.machines.forEach(m=>{load[m.code]=0;mats[m.code]=new Set()});
+  const co=+st.changeover||0, H=+st.horizon||22, bonus=+st.bonus||0, robotPay=st.robotPay==null?1:(+st.robotPay||0);
+  // jobs already running on a machine: locked first on that machine
+  const runs=[];
+  for(const m of S.machines){const rp=String(m.rPart||"").trim();if(!rp)continue;
+    const mold=S.molds.find(k=>k.part===rp);if(!mold)continue;
+    const rate=(+mold.cycle>0)?3600/(+mold.cycle)*(+mold.cav||1):0;if(!rate)continue;
+    const ji=jobs.findIndex(j=>j.part===rp||(j.members&&j.members.some(x=>x.part===rp)));const job=ji>=0?jobs[ji]:null;const rem=+m.rRemain>0?+m.rRemain:0;let qty=rem,famHrs=null;
+    if(job){const mn=job.members?job.members.find(x=>x.part===rp).need:job.need;
+      if(rem>0&&rem<mn){const f=(mn-rem)/mn;job.need*=f;job.hrs*=f;job.kgMain*=f;job.kgMb*=f;if(job.members)job.members.forEach(x=>x.need*=f)}
+      else{qty=Math.max(rem,mn);if(job.members)famHrs=Math.max(job.hrs,rem/rate);jobs.splice(ji,1)}}
+    if(!qty)continue;
+    const gPer=(+mold.partG||0)+(+mold.runnerG||0)/(+mold.cav||1),kg=qty*gPer/1000;
+    runs.push({part:rp,key:"RUN:"+m.code,mold,need:qty,due:job?job.due:null,products:job?job.products:[],rate,hrs:famHrs??qty/rate,mat:mold.mat,kgMain:kg*(1-mbr(mold)),kgMb:kg*mbr(mold),needR:mold.mode==="Robotlu",listed:[m.code],compat:[m.code],running:true,machine:m.code,suggested:m.code,compatible:true,override:false});
+    load[m.code]+=famHrs??qty/rate;mats[m.code].add(mold.mat)}
+  for(const j of jobs){
+    let best=null,bestScore=Infinity;
+    for(const c of j.compat){const m=mByCode[c],n=netHours(m);if(!n)continue;
+      const l=load[c]/n, add=(j.hrs+(load[c]>0?co:0))/n;
+      const sc=l-(mats[c].has(j.mat)?bonus:0)+(l+add>H?1000:0)+(!j.needR&&hasRobot(m)?robotPay:0);
+      if(sc<bestScore){bestScore=sc;best=c}}
+    j.suggested=best;
+    const ov=S.overrides[j.key];
+    j.machine=(ov&&mByCode[ov])?ov:best; j.override=!!(ov&&mByCode[ov]);
+    j.compatible=j.machine?j.compat.includes(j.machine):false;
+    if(j.machine){load[j.machine]+=j.hrs+(load[j.machine]>0?co:0);mats[j.machine].add(j.mat)}
+  }
+  jobs.unshift(...runs);
+  // sequence per machine: group same material while respecting due order
+  const lanes={};S.machines.forEach(m=>lanes[m.code]=[]);
+  const seq=S.seq||{},splits=S.splits||{};
+  jobs.filter(j=>j.machine).forEach(j=>{j.endH=0;const sp=+splits[j.key];
+    if(sp>0&&sp<j.need){const a=Object.create(j);a.job=j;a.sid=j.key+"#1";a.segNo=1;a.need=sp;a.hrs=j.hrs*sp/j.need;
+      const b=Object.create(j);b.job=j;b.sid=j.key+"#2";b.segNo=2;b.need=j.need-sp;b.hrs=j.hrs-a.hrs;lanes[j.machine].push(a,b)}
+    else{const a=Object.create(j);a.job=j;a.sid=j.key;a.segNo=0;lanes[j.machine].push(a)}});
+  const maxDays=[];
+  for(const m of S.machines){const lane=lanes[m.code];const ord=seq[m.code]||[];
+    const pos=s=>{if(s.running&&s.segNo!==2)return -1;const i=ord.indexOf(s.sid);return i<0?1e6:i};
+    lane.sort((a,b)=>pos(a)-pos(b)||(a.due||"9").localeCompare(b.due||"9")||a.segNo-b.segNo)}
+  // schedule all machines in time order so one mold is never on two machines at once
+  // time base: 1 unit = one working day of a machine (shifts × hours, starting at shift start); production runs at efficiency
+  const shiftH=(()=>{const [a,b]=String(st.shiftStart||"08:00").split(":").map(Number);return (a||0)+(b||0)/60})();
+  const now=new Date(),nowH=now.getHours()+now.getMinutes()/60,startNow=!st.start;
+  const isWork=d=>{const w=d.getDay();return w!==0&&(st.saturday||w!==6)};
+  const dayLenOf=m=>(+m.shifts||0)*(+m.hours||0);
+  const offOf=m=>{const L=dayLenOf(m);if(!startNow||!L||!isWork(now))return 0;return Math.min(1,Math.max(0,(nowH-shiftH)/L))};
+  const busy={},waits=[];
+  const stt=S.machines.map(m=>{const off=offOf(m);m._off=off;return{m,n:netHours(m),L:dayLenOf(m),lane:lanes[m.code],i:0,t:off,off}});
+  for(;;){let p=null;for(const x of stt){if(!x.n||x.i>=x.lane.length)continue;if(!p||x.t<p.t)p=x}if(!p)break;
+    const s=p.lane[p.i],n=p.n,L=p.L,coD=p.i>0?co/L:0,dur=s.hrs/n,mk=String(s.mold.code);const base=p.t+coD;let start=base,moved=true,by=null;
+    const iv=(busy[mk]||[]).filter(x=>x[2]!==p.m.code).sort((a,b)=>a[0]-b[0]);
+    while(moved){moved=false;for(const x of iv){if(start<x[1]-1e-9&&start+dur>x[0]+1e-9){start=x[1];by=x[2];moved=true}}}
+    s.wait=(start-base)*L;s.waitBy=by;if(s.wait>0.05)waits.push(s);
+    s.coA=p.i>0?start-coD:null;s.startA=start;s.endA=start+dur;s.L=L;s.net=n;
+    s.coStart=p.i>0?(start-coD-p.off)*n:null;s.startH=(start-p.off)*n;s.endH=(start+dur-p.off)*n;
+    s.job.net=n;s.job.L=L;s.job.endA=Math.max(s.job.endA||0,start+dur);
+    (busy[mk]=busy[mk]||[]).push([start,start+dur,p.m.code]);p.t=start+dur;p.i++}
+  for(const x of stt){const m=x.m;m._load=(x.t-x.off)*x.n;m._days=x.t-x.off;m._util=H?m._days/H:0;m._jobs=x.lane.length;maxDays.push(x.t)}
+  const span=Math.max(H,Math.ceil(Math.max(0,...maxDays)));
+  const days=workDays(start,span+1,!!st.saturday);
+  const dayOf=(h,n)=>days[Math.min(days.length-1,Math.max(0,Math.ceil(h/n)-1))];
+  const dtAt=(a,L,isEnd)=>{let i=Math.floor(a+1e-9),f=a-i;if(isEnd&&f<1e-6&&i>0){i-=1;f=1}if(f<0)f=0;const d=new Date(days[Math.min(days.length-1,Math.max(0,i))]);d.setHours(0,0,0,0);return new Date(d.getTime()+(shiftH+f*L)*3600000)};
+  for(const j of jobs){
+    if(!j.machine){j.status=j.needR&&j.listed.length?"Robotlu makine yok":"Makine yok";j.level="bad";continue}
+    if(!j.L||j.endA==null){j.status="Makine kapasitesi 0";j.level="bad";continue}
+    j.end=dtAt(j.endA,j.L,true);j.endIso=iso(j.end);
+    if(!j.compatible){j.status=(j.needR&&j.listed.includes(j.machine))?"Robot gerekli":"Uyumsuz makine";j.level="bad"}
+    else if(j.due&&j.endIso>j.due){j.status="Gecikme riski";j.level="warn"}
+    else{j.status="Termine yetişir";j.level="ok"}
+  }
+  for(const m of S.machines)for(const s of lanes[m.code]){if(!s.L||s.startA==null){s.end=null;s.startDT=null;s.endIso="";continue}
+    s.startDT=dtAt(s.startA,s.L);s.end=dtAt(s.endA,s.L,true);s.endIso=iso(s.end);if(!s.job.startDT||s.startDT<s.job.startDT)s.job.startDT=s.startDT}
+  const matTot={};jobs.forEach(j=>{if(!matTot[j.mat])matTot[j.mat]={main:0,mb:0,parts:0};matTot[j.mat].main+=j.kgMain;matTot[j.mat].mb+=j.kgMb;matTot[j.mat].parts++});
+  const out={jobs,lanes,days,span,start,buy,missing,matTot,prod,unmatched,autoLinked,waits};out.mrp=mrp(out);return out;
+}
+
+/* ---------- MRP: time-phased material requirements from the schedule ---------- */
+function mrp(R){const t0=today(),reqs={},noW=new Set(),prodStart={};
+  const dayAt=s=>s.startDT||R.days[0];
+  const add=(code,type,date,qty,ref,meta)=>{code=String(code||"").trim();if(!code||!(qty>0))return;const r=(reqs[code]=reqs[code]||{code,type,items:[]});
+    if(meta){r.unit=r.unit||(meta.unit==="gr"?"kg":meta.unit);r.name=r.name||meta.name}r.items.push({date,qty,ref})};
+  for(const m of S.machines){if(!netHours(m))continue;for(const s of R.lanes[m.code]||[]){const d=iso(dayAt(s));const fr=s.job.need?s.need/s.job.need:1;
+    if(!(+s.mold.partG>0))noW.add(`${s.mold.code} (${s.part})`);
+    add(s.mat,"Hammadde",d,s.kgMain*fr,{seg:s,m:m.code});
+    if(String(s.mold.mbCode||"").trim())add(s.mold.mbCode,"Boya",d,s.kgMb*fr,{seg:s,m:m.code});
+    (s.products||[]).forEach(p=>{if(!prodStart[p]||d<prodStart[p])prodStart[p]=d})}}
+  for(const [code,v] of Object.entries(R.buy)){const conv=v.unit==="gr"?0.001:1;
+    for(const [root,q] of Object.entries(v.byProd||{})){const P=R.prod[root]||{};let d=prodStart[root]||P.due||t0;if(d<t0)d=t0;add(code,v.cat,d,q*conv,{product:root},v)}}
+  const cards={};(S.materials||[]).forEach(c=>cards[String(c.code).trim()]=c);
+  const lim=new Date();lim.setDate(lim.getDate()+3);const limIso=iso(lim);
+  const rows=Object.values(reqs).map(r=>{const c=cards[r.code];const stock=c?+c.stock||0:0,inc=c?+c.incoming||0:0,incD=c&&c.incomingDate?c.incomingDate:"",safety=c?+c.safety||0:0,lead=c?+c.lead||0:0,moq=c?+c.moq||0:0;
+    const type=c&&c.mtype?c.mtype:r.type;r.items.sort((a,b)=>a.date.localeCompare(b.date));
+    let bal=stock+(incD?0:inc),incAdded=!incD,short=null,stockout=null;
+    for(const it of r.items){if(!incAdded&&incD<=it.date){bal+=inc;incAdded=true}bal-=it.qty;it.bal=bal;
+      if(bal<safety-1e-9&&!short)short=it.date;
+      if(bal<-1e-9){if(!stockout)stockout=it.date;const j=it.ref&&it.ref.seg&&it.ref.seg.job;if(j){j.matShort=j.matShort||[];if(!j.matShort.includes(r.code))j.matShort.push(r.code)}}}
+    const gross=r.items.reduce((a,x)=>a+x.qty,0),net=Math.max(0,gross+safety-stock-inc),order=net>0?Math.max(net,moq):0;
+    let orderBy=null;if(short&&order>0){const d=parseISO(short);d.setDate(d.getDate()-lead);orderBy=iso(d)}
+    let level="ok",status="Yeterli";
+    if(order===0&&stockout){level="warn";status="Yoldaki geç geliyor"}
+    if(order>0){level="warn";status=c?"Sipariş planla":"Stok kartı yok";if(orderBy&&orderBy<t0){level="bad";status="Sipariş geç kaldı"}else if(orderBy&&orderBy<=limIso){level="bad";status="Hemen sipariş ver"}}
+    return{code:r.code,name:(c&&c.name)||r.name||"",type,unit:r.unit||(type==="Hammadde"||type==="Boya"?"kg":"adet"),items:r.items,gross,stock,inc,incD,safety,net,order,short,stockout,orderBy,lead,level,status,hasCard:!!c}});
+  const rank={bad:0,warn:1,ok:2};rows.sort((a,b)=>rank[a.level]-rank[b.level]||(a.short||"9").localeCompare(b.short||"9")||b.gross-a.gross);
+  return{rows,noWeight:[...noW],toOrder:rows.filter(r=>r.order>0).length,late:rows.filter(r=>r.level==="bad").length}}
+function vMrp(R){const M=R.mrp;const fq=(r,v)=>r.unit==="kg"&&Math.abs(v)<10?nf1.format(v):nf0.format(v);
+  $("#view").innerHTML=`${M.noWeight.length?`<div class="panel"><div class="panel-body"><b>Gramajı girilmemiş ${M.noWeight.length} kalıp</b> hammadde hesabına girmiyor. Kalıplar ekranından parça ve yolluk gramajını girin.<div class="hint" style="margin-top:6px">${M.noWeight.slice(0,30).map(esc).join(", ")}${M.noWeight.length>30?" …":""}</div></div></div>`:""}
+  <section class="kpis kpis-3">
+    <div class="kpi"><span class="kpi-label">Takip edilen malzeme</span><span class="kpi-val">${M.rows.length}</span><span class="kpi-foot">${M.rows.filter(r=>!r.hasCard).length} kalemin stok kartı yok</span></div>
+    <div class="kpi ${M.toOrder?"is-bad":""}"><span class="kpi-label">Sipariş gereken</span><span class="kpi-val">${M.toOrder}</span><span class="kpi-foot">Net ihtiyacı olan kalem</span></div>
+    <div class="kpi ${M.late?"is-bad":""}"><span class="kpi-label">Acil</span><span class="kpi-val">${M.late}</span><span class="kpi-foot">Son sipariş tarihi geçmiş ya da 3 gün içinde</span></div></section>
+  <div class="panel"><div class="panel-head"><div><h2 class="panel-title">Malzeme ihtiyaç planı</h2><div class="panel-sub">Plandaki işlerin başlangıç günlerine göre · eldeki ve yoldaki miktar düşülür · satıra tıklayınca tüketim detayı açılır</div></div>
+    <div class="toolbar"><button class="btn" type="button" id="goMat">Stokları düzenle</button><button class="btn btn-primary" type="button" id="copyPo">Satınalma listesini kopyala</button></div></div>
+  <div class="tbl-wrap"><table><thead><tr><th>Malzeme</th><th>Tip</th><th class="r">Brüt ihtiyaç</th><th class="r">Stok</th><th class="r">Yolda</th><th class="r">Net ihtiyaç</th><th>İlk eksik</th><th class="r">Sipariş önerisi</th><th>Son sipariş</th><th>Durum</th></tr></thead><tbody>
+  ${M.rows.map(r=>`<tr class="clickable" data-code="${esc(r.code)}" tabindex="0"><td><span class="code">${esc(r.code)}</span>${r.hasCard?"":` <span class="mchip">stok kartı yok</span>`}${r.name?`<div class="hint">${esc(r.name)}</div>`:""}</td>
+    <td>${r.type==="Hammadde"?`<span class="mat"><i style="background:${matColor(r.code)}"></i>Hammadde</span>`:esc(r.type)}</td>
+    <td class="r num">${fq(r,r.gross)} ${r.unit}</td><td class="r num">${fq(r,r.stock)}</td><td class="r num">${fq(r,r.inc)}${r.incD?`<div class="hint">${fmtD(r.incD)}</div>`:""}</td>
+    <td class="r num">${r.net>0?`<b>${fq(r,r.net)}</b>`:"–"}</td><td class="num">${r.short?fmtD(r.short):"–"}</td><td class="r num">${r.order>0?`<b>${nf0.format(Math.ceil(r.order))}</b> ${r.unit}`:"–"}</td>
+    <td class="num">${r.orderBy?fmtD(r.orderBy):"–"}</td><td>${pill(r.level,r.status)}</td></tr>
+    ${ui.mrpOpen===r.code?`<tr class="mrp-detail"><td colspan="10"><div class="tbl-wrap"><table><thead><tr><th>İhtiyaç günü</th><th>Kaynak</th><th class="r">Tüketim</th><th class="r">Kalan stok</th></tr></thead><tbody>
+      ${r.items.map(it=>`<tr><td class="num">${fmtD(it.date)}</td><td>${it.ref.seg?`<span class="code">${esc(it.ref.seg.part)}</span> · ${esc(it.ref.m)}`:`Mamul <span class="code">${esc(it.ref.product)}</span>`}</td><td class="r num">${fq(r,it.qty)}</td><td class="r num" style="${it.bal<0?"color:var(--bad);font-weight:700":""}">${fq(r,it.bal)}</td></tr>`).join("")}
+      </tbody></table></div><div class="hint" style="padding:6px 12px">Tedarik süresi ${r.lead} gün · emniyet stoğu ${fq(r,r.safety)} ${r.unit}</div></td></tr>`:""}`).join("")||`<tr><td colspan="10" class="empty">Plandaki işler için malzeme ihtiyacı bulunamadı. Kalıplara hammadde ve gramaj, ürün ağacına satınalma kalemleri girildiğinde burada görünür.</td></tr>`}
+  </tbody></table></div></div>
+  <p class="note">Stok, yoldaki satınalma, tedarik süresi ve emniyet stoğu Malzemeler ekranından girilir; stok kartı olmayan malzemenin stoğu 0 kabul edilir. Son sipariş tarihi = ilk eksik günü − tedarik süresi. Malzemesi yetmeyen işler Plan ve Takvim'de "Malzeme eksik" olarak işaretlenir.</p>`;
+  const v=$("#view");
+  v.querySelectorAll("tr[data-code]").forEach(tr=>{const f=()=>{ui.mrpOpen=ui.mrpOpen===tr.dataset.code?null:tr.dataset.code;vMrp(R)};tr.onclick=f;tr.onkeydown=e=>{if(e.key==="Enter")f()}});
+  $("#goMat").onclick=()=>go("malzemeler");
+  $("#copyPo").onclick=()=>{const L=M.rows.filter(r=>r.order>0);if(!L.length){toast("Sipariş gereken kalem yok");return}
+    const txt=["Malzeme\tAd\tMiktar\tBirim\tSon sipariş\tİhtiyaç tarihi",...L.map(r=>[r.code,r.name,Math.ceil(r.order),r.unit,r.orderBy?fmtD(r.orderBy):"",r.short?fmtD(r.short):""].join("\t"))].join("\n");
+    const fallback=()=>{modal("Satınalma listesi",`<div class="modal-body"><div class="field full"><textarea id="poTxt" readonly>${esc(txt)}</textarea><span class="hint">Metin seçili; kopyalayıp Excel'e ya da e-postaya yapıştırabilirsiniz.</span></div></div>`,`<button class="btn" type="button" id="poC">Kapat</button>`);$("#poC").onclick=closeModal;const t=$("#poTxt");t.focus();t.select()};
+    try{navigator.clipboard.writeText(txt).then(()=>toast(`${L.length} kalem panoya kopyalandı; Excel'e yapıştırabilirsiniz`),fallback)}catch(e){fallback()}};
+}
+
+/* ---------- material colours ---------- */
+const MATC={PP:"var(--m-pp)",ABS:"var(--m-abs)",PA6:"var(--m-pa)",PA:"var(--m-pa)",HDPE:"var(--m-hdpe)"};
+const EXTRA=["var(--m-x1)","var(--m-x2)"];
+const HUES=[208,28,268,145,340,186,48,300,95,0,232,165,15,120,250,320];const matSeen={};
+function matColor(m){if(MATC[m])return MATC[m];if(matSeen[m]==null)matSeen[m]=Object.keys(matSeen).length;const i=matSeen[m];return`hsl(${HUES[i%HUES.length]} ${i>=HUES.length?40:52}% ${i>=HUES.length?36:44}%)`}
+const matTag=m=>`<span class="mat"><i style="background:${matColor(m)}"></i>${esc(m)}</span>`;
+const pill=(lvl,t)=>`<span class="pill pill-${lvl}">${esc(t)}</span>`;
+const shortPill=j=>j.matShort&&j.matShort.length?` <span class="pill pill-warn" title="Eksik: ${esc(j.matShort.join(", "))}">Malzeme eksik</span>`:"";
+const needTxt=j=>j.members&&!j.segNo?j.members.map(x=>nf0.format(x.need)).join(" + "):nf0.format(j.need);
+const modeTag=m=>{m=m||"Otomatik";return`<span class="mode ${m==="Robotlu"?"is-r":m==="Operatörlü"?"is-o":""}">${esc(m)}</span>`};
+
+/* ---------- navigation ---------- */
+const IC={
+  yonetim:'<path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/>',
+  uretim:'<path d="M4 20V9l5 3V9l5 3V5h6v15z"/><path d="M8 16h2M13 16h2"/>',
+  ozet:'<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z"/>',
+  plan:'<path d="M4 6h16M4 12h10M4 18h7"/><circle cx="18" cy="16" r="3"/>',
+  takvim:'<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 13h5M8 17h9"/>',
+  siparisler:'<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h7M9 17h7"/>',
+  agac:'<circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M5 16.5V14h14v2.5"/>',
+  kaliplar:'<rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M12 6v12M7 10h2M15 10h2"/>',
+  makineler:'<rect x="2" y="9" width="20" height="9" rx="1.5"/><path d="M6 9V5h6v4M6 22v-4M18 22v-4M15 13h4"/>',
+  hammadde:'<path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z"/>',
+  mrp:'<path d="M3 7l9-4 9 4-9 4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/>',
+  malzemeler:'<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+  ayarlar:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'
+};
+const VIEWS=[
+  {g:"Planlama",id:"ozet",t:"Özet"},{id:"plan",t:"Üretim Planı"},{id:"takvim",t:"Makine Takvimi"},
+  {g:"Kayıtlar",id:"siparisler",t:"Siparişler"},{id:"agac",t:"Mamul Reçetesi"},{id:"kaliplar",t:"Kalıplar"},{id:"makineler",t:"Makineler"},{id:"malzemeler",t:"Malzemeler"},
+  {id:"uretim",t:"Üretim Girişi"},
+  {g:"Raporlar",id:"yonetim",t:"Yönetim Paneli"},{id:"mrp",t:"Malzeme İhtiyacı"},{id:"ayarlar",t:"Ayarlar"}];
+let current=(location.hash||"").slice(1);if(!VIEWS.some(v=>v.id===current))current="ozet";
+const ui={q:{}};
+function renderNav(){
+  const counts={uretim:(S.production||[]).length,siparisler:S.orders.length,kaliplar:S.molds.length,makineler:S.machines.length,agac:S.bom.length,malzemeler:(S.materials||[]).length};
+  $("#nav").innerHTML=VIEWS.map(v=>(v.g?`<div class="nav-group">${v.g}</div>`:"")+
+    `<button type="button" data-v="${v.id}" ${v.id===current?'aria-current="page"':""}><svg viewBox="0 0 24 24" aria-hidden="true">${IC[v.id]}</svg>${v.t}${counts[v.id]!=null?`<span class="count">${counts[v.id]}</span>`:""}</button>`).join("");
+  $("#demoChip").hidden=!S.demo;
+  $("#sideFoot").textContent=S.demo?"Örnek verilerle çalışıyorsunuz. Ayarlar'dan temizleyebilirsiniz.":"Veriler bu tarayıcıda saklanır. Son yedek: "+(S.lastBackup?fmtDT(new Date(S.lastBackup)):"alınmadı");
+}
+$("#nav").addEventListener("click",e=>{const b=e.target.closest("button[data-v]");if(b)go(b.dataset.v)});
+function go(v){current=v;try{history.replaceState(null,"","#"+v)}catch(e){}render();window.scrollTo(0,0)}
+$("#planBtn").addEventListener("click",()=>{const r=compute();const late=r.jobs.filter(j=>j.level!=="ok").length;
+  go("takvim");toast(`Plan güncellendi: ${r.jobs.length} iş, ${S.machines.filter(m=>m._jobs).length} makine${late?`, ${late} uyarı`:""}`)});
+
+let tt;function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(tt);tt=setTimeout(()=>el.hidden=true,2600)}
+
+/* ---------- views ---------- */
+function render(){
+  renderNav();
+  const v=VIEWS.find(x=>x.id===current);
+  $("#title").textContent=v.t;
+  $("#crumb").textContent=(VIEWS.slice(0,VIEWS.indexOf(v)+1).reverse().find(x=>x.g)||{}).g||"";
+  const R=compute();
+  ({ozet:vOzet,plan:vPlan,takvim:vTakvim,siparisler:vSiparis,agac:vAgac,kaliplar:vKalip,makineler:vMakine,hammadde:vHammadde,mrp:vMrp,malzemeler:()=>vCrud("malzemeler"),uretim:()=>vCrud("uretim"),yonetim:vYonetim,ayarlar:vAyar})[current](R);
+}
+
+function vOzet(R){
+  const H=+S.settings.horizon||22;
+  const tot=S.orders.reduce((a,o)=>a+(+o.qty||0),0);
+  const used=S.machines.filter(m=>netHours(m)>0);
+  const avg=used.length?used.reduce((a,m)=>a+m._util,0)/used.length:0;
+  const risk=R.jobs.filter(j=>j.level!=="ok");
+  const hrs=R.jobs.reduce((a,j)=>a+j.hrs,0);
+  const over=S.machines.filter(m=>m._util>1).length;
+  $("#view").innerHTML=`
+  <section class="kpis">
+    <div class="kpi"><span class="kpi-label">Açık sipariş</span><span class="kpi-val">${S.orders.length}</span><span class="kpi-foot">${nf0.format(tot)} adet mamul</span></div>
+    <div class="kpi"><span class="kpi-label">Üretilecek parça</span><span class="kpi-val">${R.jobs.length}</span><span class="kpi-foot">${Object.keys(R.buy).length} kalem satınalma</span></div>
+    <div class="kpi"><span class="kpi-label">Makine saati</span><span class="kpi-val">${nf0.format(hrs)}</span><span class="kpi-foot">${H} iş günü ufukta</span></div>
+    <div class="kpi"><span class="kpi-label">Ortalama doluluk</span><span class="kpi-val">${pct(avg)}</span><span class="kpi-foot">${over?`${over} makine ufku aşıyor`:"Ufku aşan makine yok"}</span></div>
+    <div class="kpi ${risk.length?"is-bad":""}"><span class="kpi-label">Uyarı</span><span class="kpi-val">${risk.length}</span><span class="kpi-foot">${risk.length?"Gecikme veya makine sorunu":"Tüm işler termine yetişiyor"}</span></div>
+    <div class="kpi ${R.mrp.late?"is-bad":""}"><span class="kpi-label">Malzeme</span><span class="kpi-val">${R.mrp.toOrder}</span><span class="kpi-foot">${R.mrp.toOrder?`kalem sipariş gerekiyor${R.mrp.late?`, ${R.mrp.late} acil`:""}`:"Eksik malzeme yok"}</span></div>
+  </section>
+  <section class="grid-2">
+    <div class="panel"><div class="panel-head"><h2 class="panel-title">Makine doluluğu</h2><span class="panel-sub">${H} iş günlük plan ufkuna göre · kesik çizgi %85</span></div>
+      <div class="panel-body"><div class="load-list">${S.machines.map(m=>{const u=m._util,c=u>1?"var(--bad)":u>.85?"var(--warn)":"var(--ok)";
+        return`<div class="load-row"><span class="code">${esc(m.code)}</span><div class="load-bar" title="${nf1.format(m._days)} gün"><span style="width:${Math.min(100,u*100)}%;background:${c}"></span><i class="limit"></i></div><span class="num" style="text-align:right">${pct(u)}</span></div>`}).join("")}</div></div></div>
+    <div class="panel"><div class="panel-head"><h2 class="panel-title">Dikkat gerektirenler</h2></div>
+      ${risk.length?`<div class="tbl-wrap"><table><thead><tr><th>Parça</th><th>Makine</th><th>Termin</th><th>Durum</th></tr></thead><tbody>${risk.map(j=>`<tr><td class="code">${esc(j.part)}</td><td class="code">${esc(j.machine||"–")}</td><td class="num">${fmtD(j.due)}</td><td>${pill(j.level,j.status)}</td></tr>`).join("")}</tbody></table></div>`
+      :`<div class="empty">Uyarı yok. Tüm parçalar uygun makinede ve termine yetişiyor.</div>`}
+      ${R.missing.length?`<div class="panel-body err">Kalıbı tanımlı olmayan parçalar: ${R.missing.map(esc).join(", ")}</div>`:""}
+      ${R.unmatched.length?`<div class="panel-body err">Ürün ağacı ve kalıbı bulunamayan mamuller (${R.unmatched.length}): ${R.unmatched.slice(0,40).map(esc).join(", ")}${R.unmatched.length>40?" …":""}</div>`:""}
+      ${R.waits.length?`<div class="panel-body hint">Kalıp çakışması nedeniyle ertelenen işler (${R.waits.length}): ${R.waits.slice(0,12).map(s=>`${esc(s.part)} (${esc(s.mold.code)} kalıbı ${esc(s.waitBy)}'de, ${nf1.format(s.wait)} sa)`).join(", ")}${R.waits.length>12?" …":""}</div>`:""}
+    </div>
+  </section>
+  <section class="panel"><div class="panel-head"><h2 class="panel-title">Hammadde ihtiyacı</h2><span class="panel-sub">Yolluk dahil, masterbatch ayrı</span><div class="toolbar"><button class="btn" type="button" data-go="hammadde">Detay</button></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Hammadde</th><th class="r">Ana hammadde (kg)</th><th class="r">Masterbatch (kg)</th><th class="r">Parça çeşidi</th></tr></thead><tbody>
+    ${Object.entries(R.matTot).map(([k,v])=>`<tr><td>${matTag(k)}</td><td class="r num">${nf0.format(v.main)}</td><td class="r num">${nf1.format(v.mb)}</td><td class="r num">${v.parts}</td></tr>`).join("")}</tbody></table></div></section>`;
+  $("#view").querySelector("[data-go]").onclick=()=>go("mrp");
+}
+
+function vPlan(R){
+  const opts=S.machines.map(m=>m.code);
+  $("#view").innerHTML=`
+  <div class="panel"><div class="panel-head"><div><h2 class="panel-title">Parça bazlı plan</h2><div class="panel-sub">Öneri motoru uygun makineler içinde önce aynı hammaddeyi çalıştıranı, sonra en az yüklüsünü seçer. Beğenmediğiniz satırda makineyi elle değiştirin.</div></div></div>
+  <div class="tbl-wrap"><table><thead><tr><th>Parça</th><th>Kalıp</th><th>Hammadde</th><th>Çalışma</th><th class="r">İhtiyaç</th><th class="r">Saat</th><th>Termin</th><th>Öneri</th><th>Makine</th><th>Başlangıç</th><th>Bitiş</th><th>Durum</th></tr></thead><tbody>
+  ${R.jobs.map(j=>`<tr><td class="code">${esc(j.part)}</td><td class="code">${esc(j.mold.code)}</td><td>${matTag(j.mat)}</td><td>${modeTag(j.mold.mode)}</td>
+    <td class="r num">${needTxt(j)}</td><td class="r num">${nf1.format(j.hrs)}</td><td class="num">${fmtD(j.due)}</td>
+    <td class="code">${esc(j.suggested||"–")}</td>
+    <td>${j.running?`<span class="mchip run-chip">▶ ${esc(j.machine)} · çalışıyor</span>`:`<select class="sel ${j.override?"override":""}" data-part="${esc(j.key)}" aria-label="${esc(j.part)} makinesi">
+      <option value="">Öneriyi kullan</option>${opts.map(c=>`<option value="${esc(c)}" ${j.override&&j.machine===c?"selected":""}>${esc(c)}${j.compat.includes(c)?"":(j.needR&&j.listed.includes(c)?" (robot yok)":" (uyumsuz)")}</option>`).join("")}</select>`}</td>
+    <td class="num">${fmtDT(j.startDT)}</td><td class="num">${fmtDT(j.end)}</td><td>${pill(j.level,j.status)}${shortPill(j)}</td></tr>`).join("")||`<tr><td colspan="12" class="empty">Plan için sipariş ve ürün ağacı gerekli.</td></tr>`}
+  </tbody></table></div></div>`;
+  $("#view").querySelectorAll("select[data-part]").forEach(s=>s.onchange=()=>{const p=s.dataset.part;if(s.value)S.overrides[p]=s.value;else delete S.overrides[p];save();render();toast(s.value?`${p} → ${s.value}`:`${p} öneriye döndü`)});
+}
+
+function vTakvim(R){
+  const Z={hafta:40,gun:150,vardiya:420};if(!Z[ui.zoom])ui.zoom="gun";
+  const DW=Z[ui.zoom],H=+S.settings.horizon||22,co=+S.settings.changeover||0;
+  if(!S.machines.some(m=>m.code===ui.selM))ui.selM=(S.machines.find(m=>(R.lanes[m.code]||[]).length)||S.machines[0]||{}).code;
+  const days=R.days.slice(0,R.span);
+  const tIso=today();
+  const mats=[...new Set(R.jobs.map(j=>j.mat))];
+  const head=`<div class="g-head"><div class="g-label">Makine</div><div class="g-days">${days.map(d=>`<div class="g-day ${iso(d)===tIso?"today":""}" style="width:${DW}px"><b>${fmtDs(d)}</b>${d.toLocaleDateString("tr-TR",{weekday:"short"})}</div>`).join("")}</div></div>`;
+  const rows=S.machines.map(m=>{const n=netHours(m);const lane=R.lanes[m.code]||[];let px=0;
+    const bars=lane.map((j,ix)=>{let out="";
+      if(j.wait>0.05&&j.L){const wx=Math.max(((j.coA??j.startA)-j.wait/j.L)*DW,px),ww=j.wait/j.L*DW;out+=`<div class="g-wait" style="left:${wx}px;width:${ww}px" title="Kalıp ${esc(j.waitBy||"")} makinesinde, boşalması bekleniyor"></div>`;px=wx+ww}
+      if(j.coA!=null&&j.L){const cx=Math.max(j.coA*DW,px),cw=Math.max(3,co/j.L*DW);out+=`<div class="g-co" style="left:${cx}px;width:${cw}px" title="Kalıp değişimi"></div>`;px=cx+cw+1}
+      const x=Math.max(j.startA!=null?j.startA*DW:0,px),w=Math.max(8,j.startA!=null?(j.endA-j.startA)*DW:8);px=x+w+1;
+      const sel=ui.selM===m.code&&ui.selJob===j.key;
+      out+=`<button type="button" class="g-bar ${j.level==="warn"?"late":""} ${sel?"sel":""} ${j.running?"run":""} ${j.matShort?"short":""}" data-m="${esc(m.code)}" data-j="${esc(j.key)}" data-sid="${esc(j.sid)}" style="left:${x}px;width:${w}px;background:${matColor(j.mat)}" title="${ix+1}. ${esc(j.part)}${j.segNo===1?" (1. kısım)":j.segNo===2?" (devam)":""} · ${esc(j.mold.code)} · ${esc(j.mat)}\n${nf0.format(j.need)} adet ÷ ${esc(j.mold.cav)} göz × ${esc(j.mold.cycle)} sn = ${nf1.format(j.hrs)} saat baskı\nBaşlangıç ${fmtDT(j.startDT)} · Bitiş ${fmtDT(j.end)}\nTermin ${fmtD(j.due)}${j.running?"\nMakinede şu an çalışıyor (sabit)":"\nSürükleyip başka yere bırakabilirsiniz"}${j.wait>0.05?`\nKalıp ${esc(j.waitBy)} makinesinde olduğu için ${nf1.format(j.wait)} saat bekliyor`:""}">${w>=44?(j.running&&j.segNo!==2?"▶ ":"")+esc(j.part)+(j.segNo===2?" ↻":""):""}${w>=70?`<small>${nf0.format(j.need)} ad</small>`:""}</button>`;
+      return out}).join("");
+    return`<div class="g-row ${ui.selM===m.code?"is-sel":""}" data-row="${esc(m.code)}"><div class="g-label" data-pick="${esc(m.code)}" role="button" tabindex="0"><b>${esc(m.code)}</b><span>${esc(m.ton)} ton${hasRobot(m)?" · robot":""} · ${pct(m._util)}</span></div><div class="g-track" style="width:${days.length*DW}px;background-size:${DW}px 100%">${bars}${R.span>H?`<div class="g-horizon" style="left:${H*DW}px" title="Plan ufku"></div>`:""}${!S.settings.start&&m._off?`<div class="g-now" style="left:${m._off*DW}px" title="Şimdi"></div>`:""}</div></div>`}).join("");
+  $("#view").innerHTML=`
+  <div class="panel"><div class="panel-head"><div><h2 class="panel-title">Makine takvimi</h2><div class="panel-sub">Başlangıç ${fmtD(R.start)} · taralı alan kalıp değişimi · işi sürükleyip başka sıraya ya da makineye bırakın · tıklayınca sırası aşağıda açılır</div></div>
+    <div class="toolbar">${(Object.keys(S.overrides||{}).length||Object.keys(S.seq||{}).length||Object.keys(S.splits||{}).length)?`<span id="resetWrap"><button class="btn" type="button" id="resetMan">Elle düzenlemeleri sıfırla</button></span>`:""}<div class="seg" role="group" aria-label="Yakınlaştırma">${[["hafta","Hafta"],["gun","Gün"],["vardiya","Vardiya"]].map(([k,t])=>`<button type="button" data-z="${k}" aria-pressed="${ui.zoom===k}">${t}</button>`).join("")}</div></div></div>
+  <div class="panel-body legend" style="padding-block:10px">${mats.map(m=>`<span><i class="sw" style="background:${matColor(m)}"></i>${esc(m)}</span>`).join("")}<span><i class="sw" style="outline:2px solid var(--bad);background:transparent"></i>Gecikme riski</span></div>
+  <div class="gantt-wrap" id="gwrap"><div class="gantt">${head}${rows}</div></div></div>
+  <div class="panel" id="seqPanel"></div>`;
+  const drawSeq=()=>{const m=S.machines.find(x=>x.code===ui.selM);const p=$("#seqPanel");if(!m){p.innerHTML=`<div class="empty">Makine yok.</div>`;return}
+    const n=netHours(m),lane=R.lanes[m.code]||[];const dayAt=h=>R.days[Math.min(R.days.length-1,Math.max(0,Math.floor(h/(n||1))))];
+    p.innerHTML=`<div class="panel-head"><div><h2 class="panel-title">${esc(m.code)} iş sırası</h2><div class="panel-sub">${esc(m.ton)} ton${hasRobot(m)?" · robotlu":""} · ${lane.length} iş · ${nf1.format(m._load||0)} saat · doluluk ${pct(m._util||0)}</div></div>
+      <div class="toolbar"><label class="hint" for="seqM">Makine</label><select id="seqM" class="sel">${S.machines.map(x=>`<option ${x.code===m.code?"selected":""}>${esc(x.code)}</option>`).join("")}</select></div></div>
+      <div class="panel-body run-edit"><span class="run-label">Şu an çalışan iş</span>
+        <input id="rp" class="sel" list="rpl" value="${esc(m.rPart||"")}" placeholder="Parça kodu" aria-label="Çalışan parça kodu" autocomplete="off" style="width:130px"><datalist id="rpl">${S.molds.filter(k=>(k.machines||[]).includes(m.code)).map(k=>`<option value="${esc(k.part)}">`).join("")}</datalist>
+        <input id="rr" class="sel" inputmode="numeric" value="${esc(m.rRemain??"")}" placeholder="Kalan adet" aria-label="Kalan adet" style="width:110px">
+        <button class="btn btn-sm btn-primary" id="rsave" type="button">Kaydet</button>${m.rPart?`<button class="btn btn-sm" id="rclear" type="button">Makine boş</button>`:""}
+        <span class="hint">Çalışan iş planın başına sabitlenir. Kalan adet boşsa parçanın tüm ihtiyacı alınır.</span></div>
+      <div class="tbl-wrap"><table><thead><tr><th class="r">#</th><th>Parça</th><th>Kalıp</th><th>Hammadde</th><th>Çalışma</th><th class="r">Adet</th><th class="r">Saat</th><th>Başlangıç</th><th>Bitiş</th><th>Termin</th><th>Durum</th><th></th></tr></thead><tbody>
+      ${lane.map((j,i)=>`<tr class="${ui.selJob===j.key?"row-sel":""}" data-j="${esc(j.key)}"><td class="r num">${i+1}</td><td class="code">${esc(j.part)}${j.running&&j.segNo!==2?' <span class="mchip run-chip">▶ çalışıyor</span>':""}${j.segNo?` <span class="mchip">${j.segNo===1?"1. kısım":"devam"}</span>`:""}</td><td class="code">${esc(j.mold.code)}</td><td>${matTag(j.mat)}</td><td>${modeTag(j.mold.mode)}</td><td class="r num">${needTxt(j)}</td><td class="r num">${nf1.format(j.hrs)}</td><td class="num">${fmtDT(j.startDT)}</td><td class="num">${fmtDT(j.end)}</td><td class="num">${fmtD(j.due)}</td><td>${pill(j.level,j.status)}${shortPill(j)}${j.wait>0.05?`<div class="hint">Kalıp ${esc(j.waitBy)}'de, ${nf1.format(j.wait)} sa bekliyor</div>`:""}</td><td>${j.segNo===0?`<button class="btn btn-sm" type="button" data-split="${esc(j.key)}">Araya iş al</button>`:j.segNo===1?`<button class="btn btn-sm" type="button" data-merge="${esc(j.key)}">Birleştir</button>`:""}</td></tr>`).join("")||`<tr><td colspan="12" class="empty">Bu makineye atanmış iş yok.</td></tr>`}
+      </tbody></table></div>`;
+    $("#seqM").onchange=e=>{ui.selM=e.target.value;ui.selJob=null;vTakvim(R)};
+    $("#rsave").onclick=()=>{const part=$("#rp").value.trim();const rr=$("#rr").value.trim();
+      if(part&&!S.molds.some(k=>k.part===part)){toast(`${part} için kalıp kaydı yok. Önce Kalıplar'a ekleyin.`);return}
+      const q=rr===""?"":Math.round(num(rr));if(rr!==""&&!(q>0)){toast("Kalan adet pozitif bir sayı olmalı");return}
+      if(part&&S.machines.some(x=>x!==m&&x.rPart===part))toast(`Uyarı: ${part} başka bir makinede de çalışıyor görünüyor`);
+      m.rPart=part;m.rRemain=part?q:"";if(S.splits)delete S.splits["RUN:"+m.code];save();render();toast(part?`${m.code}: ${part} çalışıyor olarak kaydedildi`:`${m.code} boş olarak kaydedildi`)};
+    const rc=$("#rclear");if(rc)rc.onclick=()=>{m.rPart="";m.rRemain="";if(S.splits)delete S.splits["RUN:"+m.code];save();render();toast(`${m.code} boş olarak kaydedildi`)};
+    p.querySelectorAll("[data-split]").forEach(b=>b.onclick=()=>openSplit(R,m.code,b.dataset.split));
+    p.querySelectorAll("[data-merge]").forEach(b=>b.onclick=()=>{const part=b.dataset.merge;delete S.splits[part];
+      for(const k of Object.keys(S.seq||{})){const L=S.seq[k];const i=L.indexOf(part+"#1");if(i>=0)L[i]=part;S.seq[k]=L.filter(x=>x!==part+"#2"&&x!==part+"#1")}
+      save();render();toast("Bölünmüş iş birleştirildi")});
+    const sr=p.querySelector("tr.row-sel");if(sr&&ui._scrollSeq){sr.scrollIntoView({block:"nearest"});ui._scrollSeq=false}};
+  drawSeq();
+  const v=$("#view");
+  v.querySelectorAll("[data-z]").forEach(b=>b.onclick=()=>{ui.zoom=b.dataset.z;vTakvim(R)});
+  const keepX=fn=>{const sx=$("#gwrap").scrollLeft;fn();const g=$("#gwrap");if(g)g.scrollLeft=sx};
+  const rm=$("#resetMan");if(rm)rm.onclick=()=>{$("#resetWrap").innerHTML=`<span class="hint">Tüm elle makine, sıra ve bölme değişiklikleri silinsin mi?</span> <button class="btn btn-danger" type="button" id="resetMan2">Evet, sıfırla</button>`;
+    $("#resetMan2").onclick=()=>{S.overrides={};S.seq={};S.splits={};save();render();toast("Plan otomatik sıraya döndü")}};
+  let drag=null;
+  const clearDrop=()=>{v.querySelectorAll(".g-row.drop").forEach(r=>r.classList.remove("drop"));v.querySelectorAll(".g-drop").forEach(x=>x.remove())};
+  const dropIndex=(tr,rx,sid)=>{const bs=[...tr.querySelectorAll(".g-bar")].filter(b=>b.dataset.sid!==sid);let i=0;for(const b of bs){if(b.offsetLeft+b.offsetWidth/2<rx)i++}return{i,bs}};
+  v.querySelectorAll(".g-bar").forEach(b=>{
+    b.onpointerdown=e=>{if(e.button>0)return;drag={b,sid:b.dataset.sid,part:b.dataset.j,from:b.dataset.m,x0:e.clientX,y0:e.clientY,moved:false,locked:b.classList.contains("run")};try{b.setPointerCapture(e.pointerId)}catch(_){}};
+    b.onpointermove=e=>{if(!drag||drag.b!==b)return;
+      if(drag.locked){if(!drag.told&&Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)>12){drag.told=true;toast("Makinede çalışan iş taşınamaz. Araya iş almak için alttaki listeyi kullanın.")}return}
+      if(!drag.moved){if(Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)<6)return;drag.moved=true;
+        const g=b.cloneNode(true);g.classList.add("ghost");g.classList.remove("sel");g.style.width=Math.max(60,b.offsetWidth)+"px";g.innerHTML=esc(drag.part);document.body.append(g);drag.ghost=g;b.classList.add("dragging")}
+      drag.ghost.style.left=(e.clientX+8)+"px";drag.ghost.style.top=(e.clientY-17)+"px";
+      const el=document.elementFromPoint(e.clientX,e.clientY);const row=el&&el.closest(".g-row[data-row]");clearDrop();drag.to=null;
+      if(row){const tr=row.querySelector(".g-track");row.classList.add("drop");const rx=e.clientX-tr.getBoundingClientRect().left;const {i,bs}=dropIndex(tr,rx,drag.sid);
+        drag.to=row.dataset.row;drag.idx=i;const mk=document.createElement("div");mk.className="g-drop";
+        mk.style.left=(bs.length?(i<bs.length?bs[i].offsetLeft-3:bs[bs.length-1].offsetLeft+bs[bs.length-1].offsetWidth+1):2)+"px";tr.append(mk)}};
+    const end=e=>{if(!drag||drag.b!==b)return;const d=drag;drag=null;if(d.ghost)d.ghost.remove();b.classList.remove("dragging");clearDrop();
+      if(!d.moved){ui.selM=d.from;ui.selJob=d.part;ui._scrollSeq=true;keepX(()=>vTakvim(R));return}
+      if(!d.to||e.type==="pointercancel")return;
+      S.seq=S.seq||{};const segIds=(R.lanes[d.from]||[]).filter(s=>s.key===d.part).map(s=>s.sid);
+      if(d.to!==d.from){S.seq[d.from]=(R.lanes[d.from]||[]).map(s=>s.sid).filter(id=>!segIds.includes(id))}
+      const tgt=(R.lanes[d.to]||[]).map(s=>s.sid).filter(id=>d.to===d.from?id!==d.sid:!segIds.includes(id));
+      const moving=d.to===d.from?[d.sid]:[d.sid,...segIds.filter(id=>id!==d.sid)];tgt.splice(d.idx,0,...moving);S.seq[d.to]=tgt;
+      const job=R.jobs.find(j=>j.key===d.part);let warn="";
+      if(d.to!==d.from){S.overrides[d.part]=d.to;if(job&&!job.compat.includes(d.to))warn=job.needR&&job.listed.includes(d.to)?" · dikkat: bu iş robot gerektiriyor":" · dikkat: kalıp bu makine için uygun listede yok"}
+      ui.selM=d.to;ui.selJob=d.part;save();keepX(()=>render());toast(`${d.part} → ${d.to}, ${d.idx+1}. sıra${warn}`)};
+    b.onpointerup=end;b.onpointercancel=end;
+    b.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();ui.selM=b.dataset.m;ui.selJob=b.dataset.j;ui._scrollSeq=true;keepX(()=>vTakvim(R))}};
+  });
+  v.querySelectorAll("[data-pick]").forEach(l=>{const f=()=>{ui.selM=l.dataset.pick;ui.selJob=null;const sx=$("#gwrap").scrollLeft;vTakvim(R);$("#gwrap").scrollLeft=sx};l.onclick=f;l.onkeydown=e=>{if(e.key==="Enter")f()}});
+}
+
+function openSplit(R,mc,part){
+  const lane=R.lanes[mc]||[];const cur=lane.find(s=>s.sid===part);if(!cur)return;
+  const others=R.jobs.filter(j=>!j.running&&j.key!==part&&j.part!==cur.part).sort((a,b)=>(a.due||"9").localeCompare(b.due||"9"));
+  modal(`${cur.part} işini durdur, araya iş al`,`<form id="spf" class="modal-body">
+    <div class="field full"><span class="hint">${esc(mc)} makinesindeki ${esc(cur.part)} (${nf0.format(cur.need)} adet) ikiye bölünür. Seçtiğiniz iş araya girer, kalan adet onun arkasından devam eder. Araya kalıp değişimi süreleri otomatik eklenir.</span></div>
+    <div class="field"><label for="sp-q">Durdurmadan önce basılacak adet</label><input id="sp-q" name="q" inputmode="numeric" value="${Math.round(cur.need/2)}"><span class="hint">Örn. şu ana kadar basılan + bitirilmesi gereken kısım</span></div>
+    <div class="field"><label for="sp-j">Araya alınacak iş</label><select id="sp-j" name="j">${others.map(j=>`<option value="${esc(j.key)}">${esc(j.part)} · ${esc(j.machine||"atanmadı")} · termin ${fmtD(j.due)}${j.compat.includes(mc)?"":" · uyumsuz"}</option>`).join("")}</select><span class="hint">Listede yoksa önce Siparişler'e acil siparişi ekleyin</span></div>
+    <div class="field full err" id="sperr" hidden></div></form>`,
+    `<button class="btn btn-primary" type="submit" form="spf">Durdur ve araya al</button><button class="btn" type="button" id="spc">Vazgeç</button>`);
+  $("#spc").onclick=closeModal;
+  $("#spf").onsubmit=e=>{e.preventDefault();const q=Math.round(num($("#sp-q").value));const u=$("#sp-j").value;const err=$("#sperr");
+    if(!(q>0&&q<cur.need)){err.hidden=false;err.textContent=`Adet 1 ile ${nf0.format(cur.need-1)} arasında olmalı`;return}
+    if(!u){err.hidden=false;err.textContent="Araya alınacak bir iş seçin";return}
+    S.splits=S.splits||{};S.seq=S.seq||{};S.splits[part]=q;
+    const uj=R.jobs.find(j=>j.key===u);
+    if(uj&&uj.machine&&uj.machine!==mc&&S.seq[uj.machine])S.seq[uj.machine]=S.seq[uj.machine].filter(id=>id!==u&&!id.startsWith(u+"#"));
+    if(uj&&uj.machine&&uj.machine!==mc){S.seq[uj.machine]=(R.lanes[uj.machine]||[]).map(s=>s.sid).filter(id=>id!==u&&!id.startsWith(u+"#"))}
+    S.overrides[u]=mc;const ids=lane.map(s=>s.sid).filter(id=>id!==u&&!id.startsWith(u+"#"));const at=ids.indexOf(part);
+    ids.splice(at,1,part+"#1",u,part+"#2");S.seq[mc]=ids;
+    ui.selM=mc;ui.selJob=u;save();closeModal();render();toast(`${cur.part} ${nf0.format(q)} adette durdu, araya ${u} alındı`)};
+}
+
+function recipePanel(){const prods=[...new Set(S.bom.map(b=>b.product))].sort((a,b)=>a.localeCompare(b,"tr",{numeric:true}));if(!prods.length)return"";
+  if(!prods.includes(ui.recProd))ui.recProd=prods[0];
+  const bomBy={};S.bom.forEach(b=>{(bomBy[b.product]=bomBy[b.product]||[]).push(b)});
+  const open=S.orders.filter(o=>o.product===ui.recProd).reduce((a,o)=>a+(+o.qty||0),0);
+  const items=(bomBy[ui.recProd]||[]).slice().sort((a,b)=>CATS.indexOf(catOf(a))-CATS.indexOf(catOf(b)));
+  const row=(b,mult,depth)=>{const c=catOf(b),q=(+b.qty||0)*(1+(+b.scrap||0)),u=b.unit||defUnit(b);const kids=depth<5?(bomBy[b.part]||[]):[];const mold=S.molds.find(k=>k.part===b.part);
+    return`<div class="rc-row"><span class="rc-cat rc-${catKey(c)}" style="margin-left:${depth*18}px">${depth?"↳ ":""}${esc(c)}</span><span class="code">${esc(b.part)}</span><span class="rc-name">${esc(b.name||(mold?`Kalıp ${mold.code} · ${mold.mat||""}`:""))}</span>
+      <span class="num rc-q">${nfQ.format(+b.qty||0)} ${esc(u)}${+b.scrap?` <span class="hint">+%${nfQ.format(b.scrap*100)}</span>`:""}</span><span class="num rc-t">${open?`${nfQ.format(Math.round(open*mult*q*100)/100)} ${esc(u)}`:"–"}</span></div>`+kids.map(k=>row(k,mult*q,depth+1)).join("")};
+  const groups=CATS.map(c=>[c,items.filter(b=>catOf(b)===c).length]).filter(x=>x[1]);
+  return`<div class="panel"><div class="panel-head"><div><h2 class="panel-title">Mamul reçetesi</h2><div class="panel-sub">${groups.map(([c,n])=>`${n} ${c.toLocaleLowerCase("tr")}`).join(" · ")||"Kalem yok"}${open?` · açık sipariş ${nf0.format(open)} adet`:""}</div></div>
+    <div class="toolbar"><label class="hint" for="recP">Mamul</label><input id="recP" class="sel" list="recPl" value="${esc(ui.recProd)}" style="width:150px" autocomplete="off"><datalist id="recPl">${prods.map(p=>`<option value="${esc(p)}">`).join("")}</datalist><button class="btn btn-sm btn-primary" type="button" id="recAdd">Bu mamule kalem ekle</button></div></div>
+    <div class="rc-wrap"><div class="rc-head"><span>Grup</span><span>Bileşen</span><span>Açıklama</span><span class="rc-q">Mamul başına</span><span class="rc-t">Açık sipariş için</span></div>
+    ${items.length?items.map(b=>row(b,1,0)).join(""):`<div class="empty">Bu mamulün reçetesi yok.</div>`}</div></div>`}
+function famPanel(){const g={};S.molds.forEach(k=>{const c=String(k.code).trim();if(!c)return;(g[c]=g[c]||[]);if(!g[c].some(x=>x.part===k.part))g[c].push(k)});
+  const rows=Object.entries(g).filter(([c,v])=>v.length>1).sort((a,b)=>a[0].localeCompare(b[0],"tr",{numeric:true}));if(!rows.length)return"";
+  const fam=S.family||{};const on=rows.filter(([c])=>fam[c]).length;
+  return`<details class="panel fam" ${on?"":"open"}><summary class="panel-head"><div><h2 class="panel-title">Ortak kalıplar · ${rows.length}</h2><div class="panel-sub">Aynı kalıp koduna bağlı birden fazla parça. Tek baskıda birlikte çıkıyorsa "Aile kalıbı" olarak işaretleyin; planda tek iş olarak, aynı anda basılır. ${on} kalıp işaretli.</div></div></summary>
+    <div class="tbl-wrap"><table><thead><tr><th>Kalıp</th><th>Parçalar (göz · çevrim)</th><th>Aile kalıbı</th></tr></thead><tbody>
+    ${rows.map(([c,v])=>`<tr><td class="code">${esc(c)}</td><td style="white-space:normal">${v.map(k=>`<span class="mchip">${esc(k.part)} · ${esc(k.cav)} göz · ${esc(k.cycle)} sn</span>`).join(" ")}${new Set(v.map(k=>k.cycle)).size>1?` <span class="hint" style="color:var(--warn)">çevrim süreleri farklı</span>`:""}</td>
+      <td><label class="fam-toggle"><input type="checkbox" data-fam="${esc(c)}" ${fam[c]?"checked":""}> Birlikte basılır</label></td></tr>`).join("")}
+    </tbody></table></div>
+    <div class="panel-body hint">Aile kalıbında her parçanın Göz Sayısı, o parçadan bir baskıda kaç adet çıktığını göstermeli (örn. 1 sol + 1 sağ ise her ikisine 1). Süre, ihtiyacı daha uzun süren parçaya göre hesaplanır.</div></details>`}
+
+/* ==================== YÖNETİM PANELİ · analiz modülleri ====================
+   Saf fonksiyonlar: yalnızca S (kayıtlar) ve R (compute() sonucu) okur, hiçbir şey yazmaz.
+   Eksik veri asla 0 ya da tahminle doldurulmaz: hesaplanamayan değer null döner. */
+const Dash={
+  parseF(F){F=F||{};return{from:F.from||"",to:F.to||"",machine:F.machine||"",product:String(F.product||"").trim()}},
+  inRange(d,f){if(!f.from&&!f.to)return true;if(!d)return false;d=String(d).slice(0,10);return(!f.from||d>=f.from)&&(!f.to||d<=f.to)},
+  prodMatch(code,p){if(!p)return true;code=String(code||"").trim();return code===p||(p.endsWith("-")&&code.startsWith(p))},
+  // parça -> hangi mamullerde kullanıldığı (plan + çok seviyeli reçete)
+  partProducts(S,R){const m={};const add=(part,p)=>{(m[part]=m[part]||new Set()).add(p)};
+    (R.jobs||[]).forEach(j=>(j.members||[{part:j.part}]).forEach(x=>(j.products||[]).forEach(p=>add(x.part,p))));
+    const by={};S.bom.forEach(b=>{(by[b.part]=by[b.part]||[]).push(b.product)});
+    const up=(part,seen)=>{const out=new Set();for(const p of by[part]||[]){if(seen.has(p))continue;seen.add(p);out.add(p);up(p,seen).forEach(x=>out.add(x))}return out};
+    Object.keys(by).forEach(part=>up(part,new Set()).forEach(p=>add(part,p)));return m},
+  partMatch(pp,part,p){if(!p)return true;if(Dash.prodMatch(part,p))return true;const s=pp[part];if(s)for(const x of s)if(Dash.prodMatch(x,p))return true;
+    const base=String(part||"").replace(/-\d+$/,"");return base!==part&&Dash.prodMatch(base,p)},
+  dueEst(o,lead){if(o.dueEst)return true;if(!o.orderDate||!o.due)return false;return Math.round((parseISO(o.due)-parseISO(o.orderDate))/864e5)===lead},
+  weekStart(d){const x=parseISO(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return iso(x)},
+  workdays(from,to,sat){let n=0;const d=parseISO(from),e=parseISO(to);while(d<=e){const w=d.getDay();if(w!==0&&(sat||w!==6))n++;d.setDate(d.getDate()+1)}return n},
+
+  /* açık siparişler: miktar, termin haftası, yaşlanma, mamul bazında net ihtiyaç */
+  orders(S,f,t0){const lead=S.settings.leadDays==null?30:+S.settings.leadDays;
+    const L=S.orders.filter(o=>Dash.prodMatch(o.product,f.product)&&Dash.inRange(o.due,f));
+    const byP={},byW={},cust=new Set();let qty=0,est=0,overdue=0,overQty=0,agingN=0;const aging={"0–30 gün":0,"31–60 gün":0,"61–90 gün":0,"90+ gün":0};
+    for(const o of L){const q=+o.qty||0;qty+=q;if(o.customer)cust.add(String(o.customer).trim());if(Dash.dueEst(o,lead))est++;
+      const P=byP[o.product]=byP[o.product]||{code:o.product,qty:0,lines:0,stock:null,oldest:null,due:null};P.qty+=q;P.lines++;
+      if(o.stock!==""&&o.stock!=null&&!isNaN(+o.stock))P.stock=Math.max(P.stock??0,+o.stock);
+      if(o.orderDate&&(!P.oldest||o.orderDate<P.oldest))P.oldest=o.orderDate;if(o.due&&(!P.due||o.due<P.due))P.due=o.due;
+      const late=!!o.due&&o.due<t0;if(late){overdue++;overQty+=q}
+      const wk=!o.due?"none":late?"late":Dash.weekStart(o.due);byW[wk]=(byW[wk]||0)+q;
+      if(o.orderDate){agingN++;const a=Math.floor((parseISO(t0)-parseISO(o.orderDate))/864e5);aging[a<=30?"0–30 gün":a<=60?"31–60 gün":a<=90?"61–90 gün":"90+ gün"]+=q}}
+    const prods=Object.values(byP).map(p=>({...p,net:p.stock==null?null:Math.max(0,p.qty-p.stock)}));
+    const net=prods.reduce((a,p)=>a+(p.net??0),0),netUnknown=prods.filter(p=>p.net==null).length;
+    const weeks=Object.keys(byW).filter(k=>k!=="late"&&k!=="none").sort();
+    const buckets=[...(byW.late?[{key:"late",label:"Gecikmiş",short:"Gecikmiş",qty:byW.late,late:true}]:[]),
+      ...weeks.map(w=>({key:w,label:`${fmtD(w)} haftası`,short:fmtDs(parseISO(w)),qty:byW[w]})),...(byW.none?[{key:"none",label:"Terminsiz",short:"Yok",qty:byW.none}]:[])];
+    return{lines:L.length,qty,customers:cust.size,products:prods.length,prods,net,netUnknown,est,overdue,overQty,buckets,aging,agingN}},
+
+  /* üretim gerçekleşmeleri: yalnızca Üretim Girişi kayıtları */
+  production(S,f,pp){const recs=(S.production||[]).filter(r=>Dash.inRange(r.date,f)&&(!f.machine||r.machine===f.machine)&&Dash.partMatch(pp,r.part,f.product));
+    const T={good:0,scrap:0};const byDay={},byM={},byR={};
+    for(const r of recs){const g=+r.good||0,s=+r.scrap||0;T.good+=g;T.scrap+=s;
+      const D=byDay[r.date]=byDay[r.date]||{good:0,scrap:0};D.good+=g;D.scrap+=s;(byM[r.machine]=byM[r.machine]||[]).push(r);
+      if(+r.downH>0){const k=String(r.reason||"").trim()||"Neden girilmemiş";byR[k]=(byR[k]||0)+(+r.downH)}}
+    T.scrapRate=T.good+T.scrap>0?T.scrap/(T.good+T.scrap):null;
+    return{recs,T,days:Object.keys(byDay).sort().map(d=>({date:d,...byDay[d]})),byM,reasons:Object.entries(byR).sort((a,b)=>b[1]-a[1])}},
+  /* OEE = Kullanılabilirlik × Performans × Kalite. Gerekli alan boşsa bileşen null kalır. */
+  oee(S,recs){const molds={};S.molds.forEach(k=>{if(!molds[k.part])molds[k.part]=k});
+    let run=0,down=0,runN=0,downN=0,ideal=0,idealN=0,good=0,scrap=0;
+    for(const r of recs){const g=+r.good||0,s=+r.scrap||0;good+=g;scrap+=s;const hasRun=r.runH!==""&&r.runH!=null&&!isNaN(+r.runH);
+      if(hasRun){run+=+r.runH;runN++}if(r.downH!==""&&r.downH!=null&&!isNaN(+r.downH)){down+=+r.downH;downN++}
+      const k=molds[r.part];if(hasRun&&k&&+k.cycle>0&&+k.cav>0){ideal+=(g+s)*(+k.cycle)/(+k.cav)/3600;idealN++}}
+    const n=recs.length;const A=n&&runN===n&&downN===n&&run+down>0?run/(run+down):null;
+    const P=n&&idealN===n&&run>0?ideal/run:null;const Q=good+scrap>0?good/(good+scrap):null;
+    const why=[];if(n&&(runN<n||downN<n))why.push(`${n-Math.min(runN,downN)} kayıtta çalışma/duruş süresi boş`);if(n&&idealN<n)why.push(`${n-idealN} kayıtta çevrim süresi bulunamadı`);
+    return{A,P,Q,OEE:A!=null&&P!=null&&Q!=null?A*P*Q:null,run,down,good,scrap,n,why}},
+
+  /* makine plan yükü: takvimdeki iş saatleri, seçili tarih aralığına kırpılmış */
+  machinePlan(S,R,f,pp,t0){const H=+S.settings.horizon||22;const fromT=f.from?parseISO(f.from).getTime():null,toT=f.to?parseISO(f.to).getTime()+864e5:null;
+    const endH=iso(R.days[Math.min(R.days.length-1,H-1)]||new Date());const days=(f.from||f.to)?Dash.workdays(f.from||t0,f.to||endH,!!S.settings.saturday):H;
+    return S.machines.filter(m=>!f.machine||m.code===f.machine).map(m=>{let load=0,jobs=0;
+      for(const s of R.lanes[m.code]||[]){if(!s.startDT||!s.end)continue;const parts=s.members?s.members.map(x=>x.part):[s.part];
+        if(f.product&&!parts.some(p=>Dash.partMatch(pp,p,f.product))&&!(s.products||[]).some(p=>Dash.prodMatch(p,f.product)))continue;
+        const a=s.startDT.getTime(),b=s.end.getTime(),lo=fromT==null?a:Math.max(a,fromT),hi=toT==null?b:Math.min(b,toT);if(hi<=lo)continue;
+        load+=s.hrs*(b>a?(hi-lo)/(b-a):1);jobs++}
+      const cap=netHours(m)*days;return{code:m.code,ton:m.ton,robot:hasRobot(m),load,cap,util:cap>0?load/cap:null,jobs,hourCost:m.hourCost===""||m.hourCost==null||isNaN(+m.hourCost)?null:+m.hourCost}})},
+
+  /* kritik stok: MRP satırları, filtreye göre o dönemdeki/makinedeki/üründeki tüketim */
+  stock(R,f){const anyF=f.from||f.to||f.machine||f.product;
+    return R.mrp.rows.map(r=>{let g=0;for(const it of r.items){if(!Dash.inRange(it.date,f))continue;const ref=it.ref||{};
+        if(ref.seg){if(f.machine&&ref.m!==f.machine)continue;if(f.product&&!(ref.seg.products||[]).some(p=>Dash.prodMatch(p,f.product)))continue}
+        else{if(f.machine)continue;if(f.product&&!Dash.prodMatch(ref.product,f.product))continue}g+=it.qty}
+      return{...r,fGross:anyF?g:r.gross}}).filter(r=>r.fGross>0)},
+
+  /* standart maliyet: parça = hammadde + boya + makine saati; mamul = reçete toplamı. Eksik kalem varsa toplam verilmez. */
+  cost(S,R){const st=S.settings,mats={};(S.materials||[]).forEach(m=>{mats[String(m.code).trim()]=m});
+    const price=c=>{const m=mats[String(c||"").trim()];return m&&m.price!==""&&m.price!=null&&!isNaN(+m.price)?+m.price:null};
+    const mach={};S.machines.forEach(m=>mach[m.code]=m);const jobM={};(R.jobs||[]).forEach(j=>(j.members||[{part:j.part}]).forEach(x=>{if(j.machine)jobM[x.part]=j.machine}));
+    const moldOf={};S.molds.forEach(k=>{if(!moldOf[k.part])moldOf[k.part]=k});const mbDef=st.mbDefault==null?0.02:+st.mbDefault;
+    const partCost=part=>{const k=moldOf[part];if(!k)return{mat:null,mach:null,miss:["kalıp kaydı"]};const miss=[];let mat=null,machC=null;
+      const gPer=(+k.partG||0)+(+k.runnerG||0)/(+k.cav||1),mbC=String(k.mbCode||"").trim(),mb=(+k.mb>0)?+k.mb:(mbC?mbDef:0);
+      if(!(+k.partG>0))miss.push("gramaj");else{const pm=price(k.mat);if(pm==null)miss.push(`${k.mat||"hammadde"} fiyatı`);else{mat=gPer/1000*(1-mb)*pm;
+        if(mbC){const pb=price(mbC);if(pb==null){miss.push(`${mbC} fiyatı`);mat=null}else mat+=gPer/1000*mb*pb}}}
+      const mc=jobM[part]||(k.machines||[])[0],m=mach[mc];
+      if(!m||m.hourCost===""||m.hourCost==null||isNaN(+m.hourCost))miss.push(`${mc||"makine"} saat maliyeti`);else if(!(+k.cycle>0&&+k.cav>0))miss.push("çevrim/göz");
+      else machC=(+k.cycle)/(+k.cav)/3600/((+m.eff)||1)*(+m.hourCost);return{mat,mach:machC,miss,machine:mc}};
+    const bomBy={};S.bom.forEach(b=>{(bomBy[b.product]=bomBy[b.product]||[]).push(b)});const memo={};
+    const linesOf=p=>{if(bomBy[p])return bomBy[p];if(moldOf[p])return[{part:p,qty:1,cat:"Yarı mamul"}];
+      if(st.autoBom!==false){const re=new RegExp("^"+String(p).replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"-\\d+$");const subs=[...new Set(S.molds.filter(k=>re.test(k.part)).map(k=>k.part))];if(subs.length)return subs.map(s=>({part:s,qty:1,cat:"Yarı mamul"}))}return null};
+    const prodCost=(p,depth)=>{if(memo[p])return memo[p];const o={mat:0,mach:0,buy:0,miss:new Set()};memo[p]=o;const lines=linesOf(p);
+      if(!lines){o.miss.add("reçete");return o}
+      for(const b of lines){const q=(+b.qty||0)*(1+(+b.scrap||0));
+        if(isProd(b)){if(moldOf[b.part]){const c=partCost(b.part);c.miss.forEach(x=>o.miss.add(x));if(c.mat!=null)o.mat+=c.mat*q;if(c.mach!=null)o.mach+=c.mach*q}
+          else if(bomBy[b.part]&&depth<6){const c=prodCost(b.part,depth+1);o.mat+=c.mat*q;o.mach+=c.mach*q;o.buy+=c.buy*q;c.miss.forEach(x=>o.miss.add(x))}
+          else o.miss.add(`${b.part} kalıp/reçete`)}
+        else{const pr=price(b.part);if(pr==null)o.miss.add(`${b.part} fiyatı`);else o.buy+=pr*q*((b.unit||"")==="gr"?0.001:1)}}
+      return o};
+    const products=Object.entries(R.prod).filter(([,P])=>P.qty>0).map(([code,P])=>{const c=prodCost(code,0);const ok=c.miss.size===0;const unit=c.mat+c.mach+c.buy;
+      return{code,need:P.qty,mat:c.mat,mach:c.mach,buy:c.buy,unit:ok?unit:null,total:ok?unit*P.qty:null,miss:[...c.miss]}});
+    const buyRows=R.mrp.rows.filter(r=>r.order>0).map(r=>({code:r.code,type:r.type,unit:r.unit,order:r.order,price:price(r.code),value:price(r.code)==null?null:price(r.code)*r.order}));
+    return{products,buyRows,price}},
+
+  /* veri eksikleri raporu */
+  gaps(S,R){const G=[];const add=(sev,title,detail,have,total,fix)=>G.push({sev,title,detail,have,total,fix});
+    const pr=(S.production||[]).length;
+    add(pr?"ok":"bad","Üretim gerçekleşmeleri",pr?`${pr} kayıt var.`:"Hiç üretim kaydı yok. Gerçekleşen üretim, fire ve makine verimi (OEE) hesaplanamıyor.",pr,null,"uretim");
+    if(pr){const o=Dash.oee(S,S.production);if(o.why.length)add("warn","Üretim kayıtlarında boş alan",o.why.join(" · ")+". Bu kayıtlar OEE'ye girmez.",null,null,"uretim")}
+    const nm=S.molds.length,noW=S.molds.filter(k=>!(+k.partG>0)).length;
+    add(!nm?"bad":noW===nm?"bad":noW?"warn":"ok","Parça gramajı",noW?`${noW} kalıpta parça gramajı yok. Bu parçaların hammadde ihtiyacı ve maliyeti hesaplanamıyor.`:"Tüm kalıplarda gramaj var.",nm-noW,nm,"kaliplar");
+    const needP=Object.values(R.prod).filter(p=>p.qty>0).length;
+    add(R.unmatched.length?"warn":"ok","Mamul reçetesi",R.unmatched.length?`İhtiyacı olan ${R.unmatched.length} mamul kalıba bağlanamıyor; plana, MRP'ye ve maliyete girmiyor.`:"İhtiyacı olan tüm mamuller kalıba bağlı.",needP-R.unmatched.length,needP,"agac");
+    const rows=R.mrp.rows,noCard=rows.filter(r=>!r.hasCard).length;
+    if(rows.length)add(noCard?"warn":"ok","Malzeme stok kartları",noCard?`MRP'de geçen ${noCard} malzemenin stok kartı yok; stokları 0 sayılıyor.`:"MRP'deki tüm malzemelerin stok kartı var.",rows.length-noCard,rows.length,"malzemeler");
+    const mats={};(S.materials||[]).forEach(m=>mats[String(m.code).trim()]=m);const codes=[...new Set([...rows.map(r=>r.code),...S.molds.map(k=>String(k.mat||"").trim()).filter(Boolean)])];
+    const noPrice=codes.filter(c=>{const m=mats[c];return!m||m.price===""||m.price==null||isNaN(+m.price)}).length;
+    if(codes.length)add(noPrice===codes.length?"bad":noPrice?"warn":"ok","Malzeme birim fiyatı",noPrice?`${noPrice} malzemenin fiyatı yok. Maliyet analizi bu kalemler için yapılamıyor.`:"Tüm malzemelerin fiyatı var.",codes.length-noPrice,codes.length,"malzemeler");
+    const noHC=S.machines.filter(m=>m.hourCost===""||m.hourCost==null||isNaN(+m.hourCost)).length;
+    add(noHC===S.machines.length?"bad":noHC?"warn":"ok","Makine saat maliyeti",noHC?`${noHC} makinenin saat maliyeti yok. Makine maliyeti hesaplanamıyor.`:"Tüm makinelerin saat maliyeti var.",S.machines.length-noHC,S.machines.length,"makineler");
+    const lead=S.settings.leadDays==null?30:+S.settings.leadDays,est=S.orders.filter(o=>Dash.dueEst(o,lead)).length;
+    if(S.orders.length)add(est?"warn":"ok","Sipariş terminleri",est?`${est} siparişin termini gerçek değil; sipariş tarihi + ${lead} gün olarak tahmin edildi. Gecikme ve termin grafikleri tahmindir.`:"Terminler dosyadan geliyor.",S.orders.length-est,S.orders.length,null);
+    const def=S.machines.filter(m=>+m.shifts===3&&+m.hours===7.5&&+m.eff===0.85).length;
+    if(def)add("info","Makine kapasitesi",`${def} makine varsayılan değerlerde (3 vardiya × 7,5 saat, %85 verim). Gerçek değerler farklıysa doluluk yanlış görünür.`,S.machines.length-def,S.machines.length,"makineler");
+    const run=S.machines.filter(m=>String(m.rPart||"").trim()).length;
+    if(!run&&S.machines.length)add("info","Makinede çalışan işler","Hiçbir makinede çalışan iş girilmemiş; plan bütün makineler boşmuş gibi başlıyor.",0,S.machines.length,"takvim");
+    const rank={bad:0,warn:1,info:2,ok:3};return G.sort((a,b)=>rank[a.sev]-rank[b.sev])}
+};
+
+/* ==================== YÖNETİM PANELİ · grafik modülü (SVG / HTML, tema token'larıyla) ==================== */
+const Chart={
+  specs:[],
+  tip(){let t=document.getElementById("chTip");if(!t){t=document.createElement("div");t.id="chTip";t.className="ch-tip";t.hidden=true;document.body.append(t)}return t},
+  bind(root){const t=Chart.tip();root.querySelectorAll("[data-tip]").forEach(el=>{
+    const show=e=>{t.innerHTML=el.getAttribute("data-tip");t.hidden=false;const w=t.offsetWidth,h=t.offsetHeight;
+      t.style.left=Math.min(window.innerWidth-w-8,Math.max(8,e.clientX+14))+"px";t.style.top=(e.clientY-h-14<8?e.clientY+18:e.clientY-h-14)+"px"};
+    el.addEventListener("pointerenter",show);el.addEventListener("pointermove",show);el.addEventListener("pointerleave",()=>{t.hidden=true})})},
+  ticks(max){const raw=max/4,p=Math.pow(10,Math.floor(Math.log10(raw||1)));const step=[1,2,2.5,5,10].map(x=>x*p).find(x=>x>=raw)||p*10;const out=[];for(let v=0;v<=max+step*0.001;v+=step)out.push(v);if(out[out.length-1]<max)out.push(out[out.length-1]+step);return out},
+  short(v){const a=Math.abs(v);return a>=1e6?nf1.format(v/1e6)+" M":a>=1e4?nf0.format(v/1e3)+" B":a>=1e3?nf1.format(v/1e3)+" B":nf0.format(v)},
+  bar(x,y,w,h,color,round){if(h<=0)return"";const r=round?Math.min(4,w/2,h):0;
+    return r?`<path d="M${x},${y+h}V${y+r}Q${x},${y} ${x+r},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h}Z" fill="${color}" class="ch-mark"/>`:`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${color}" class="ch-mark"/>`},
+  /* dikey çubuk (yığılmış): cats=[{key,label,short,color?}], series=[{name,color,values}] */
+  vbar(el,{cats,series,fmt=v=>nf0.format(v),unit="",h=230,onClick}){const W=Math.max(260,el.clientWidth||600),padL=46,padR=6,padT=10,padB=30,ph=h-padT-padB,pw=W-padL-padR;
+    const tot=cats.map((c,i)=>series.reduce((a,s)=>a+(s.values[i]||0),0)),tk=Chart.ticks(Math.max(1,...tot)),top=tk[tk.length-1];
+    const step=pw/Math.max(1,cats.length),bw=Math.max(3,Math.min(44,step*0.68)),every=Math.max(1,Math.ceil(cats.length/Math.max(1,Math.floor(pw/58))));
+    let g=tk.map(v=>{const y=padT+ph-v/top*ph;return`<line x1="${padL}" x2="${W-padR}" y1="${y}" y2="${y}" class="ch-grid"/><text x="${padL-7}" y="${y+4}" class="ch-ax" text-anchor="end">${Chart.short(v)}</text>`}).join("");
+    cats.forEach((c,i)=>{const x=padL+step*i+(step-bw)/2;let y0=padT+ph;const last=series.map((s,si)=>s.values[i]>0?si:-1).reduce((a,b)=>Math.max(a,b),-1);
+      series.forEach((s,si)=>{const v=s.values[i]||0;if(v<=0)return;const hh=v/top*ph;g+=Chart.bar(x,y0-hh,bw,hh,(series.length===1&&c.color)||s.color,si===last);y0-=hh});
+      const tip=`<div class="t-h">${esc(c.label)}</div>`+series.map(s=>`<div><i style="background:${(series.length===1&&c.color)||s.color}"></i>${esc(s.name)} <b>${fmt(s.values[i]||0)}${unit}</b></div>`).join("")+(series.length>1?`<div class="t-f">Toplam <b>${fmt(tot[i])}${unit}</b></div>`:"");
+      g+=`<rect x="${padL+step*i}" y="${padT}" width="${step}" height="${ph}" fill="transparent" class="ch-hit${onClick?" ch-click":""}" data-tip="${esc(tip)}" ${onClick?`data-click="${esc(c.key)}"`:""}/>`;
+      if(i%every===0)g+=`<text x="${x+bw/2}" y="${h-padB+17}" class="ch-ax" text-anchor="middle">${esc(c.short||c.label)}</text>`});
+    g+=`<line x1="${padL}" x2="${W-padR}" y1="${padT+ph}" y2="${padT+ph}" class="ch-base"/>`;
+    el.innerHTML=`<svg width="${W}" height="${h}" viewBox="0 0 ${W} ${h}" role="img" aria-label="${esc(el.dataset.label||"")}">${g}</svg>`;Chart.bind(el);
+    if(onClick)el.querySelectorAll("[data-click]").forEach(r=>r.addEventListener("click",()=>onClick(r.dataset.click)))},
+  /* yatay çubuk (sıralama): rows=[{key,label,sub,values:[...],valueText,color?}] */
+  hbar(el,{rows,series,fmt=v=>nf0.format(v),unit="",ref,refLabel,onClick,max,grouped}){const mx=max||Math.max(1e-9,...rows.map(r=>grouped?Math.max(...r.values.map(v=>v||0)):r.values.reduce((a,b)=>a+(b||0),0)),ref||0);
+    el.innerHTML=`<div class="hb">${rows.map(r=>{const tot=r.values.reduce((a,b)=>a+(b||0),0);
+      const segs=r.values.map((v,i)=>grouped?`<span class="hb-line"><span class="hb-seg" style="width:${Math.max(0,v||0)/mx*100}%;background:${series[i].color}"></span></span>`:v>0?`<span class="hb-seg" style="width:${v/mx*100}%;background:${(series.length===1&&r.color)||series[i].color}"></span>`:"").join("");
+      const tip=`<div class="t-h">${esc(r.label)}</div>${r.sub?`<div class="t-f">${esc(r.sub)}</div>`:""}`+series.map((s,i)=>`<div><i style="background:${(series.length===1&&r.color)||s.color}"></i>${esc(s.name)} <b>${fmt(r.values[i]||0)}${unit}</b></div>`).join("")+(r.tipExtra||"");
+      return`<div class="hb-row${onClick?" ch-click":""}" data-tip="${esc(tip)}" ${onClick?`data-click="${esc(r.key)}" tabindex="0" role="button"`:""}><span class="hb-label"><span class="code">${esc(r.label)}</span>${r.sub?`<small>${esc(r.sub)}</small>`:""}</span>
+        <span class="hb-track${grouped?" grp":""}">${segs}${ref?`<i class="hb-ref" style="left:${ref/mx*100}%" title="${esc(refLabel||"")}"></i>`:""}</span><span class="hb-val num">${r.valueText!=null?r.valueText:fmt(tot)+unit}</span></div>`}).join("")}</div>`;
+    Chart.bind(el);if(onClick)el.querySelectorAll("[data-click]").forEach(r=>{const f=()=>onClick(r.dataset.click);r.addEventListener("click",f);r.addEventListener("keydown",e=>{if(e.key==="Enter")f()})})},
+  legend(series){return`<div class="ch-legend">${series.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join("")}</div>`},
+  mountAll(root){root.querySelectorAll("[data-ch]").forEach(el=>{const sp=Chart.specs[+el.dataset.ch];if(sp)Chart[sp.type](el,sp.opt)})},
+  slot(type,opt,label){Chart.specs.push({type,opt});return`<div class="ch-box" data-ch="${Chart.specs.length-1}" data-label="${esc(label||"")}"></div>`}
+};
+const COL={c1:"var(--s1)",c2:"var(--s2)",c3:"var(--s3)",c4:"var(--s4)",ok:"var(--ok)",warn:"var(--warn)",bad:"var(--bad)",muted:"var(--muted)"};
+
+/* ==================== YÖNETİM PANELİ · ekran ==================== */
+const DKEY="planpres-dash";
+function dashF(){if(!ui.dash){let v=null;try{v=JSON.parse(localStorage.getItem(DKEY)||"null")}catch(e){}ui.dash=v&&typeof v==="object"?v:{preset:"all",from:"",to:"",machine:"",product:""}}return ui.dash}
+function setDashF(p){Object.assign(dashF(),p);try{localStorage.setItem(DKEY,JSON.stringify(ui.dash))}catch(e){}const sy=window.scrollY;render();window.scrollTo(0,sy)}
+function presetRange(p,t0){const d=parseISO(t0),add=n=>{const x=new Date(d);x.setDate(x.getDate()+n);return iso(x)};
+  if(p==="p7")return{from:add(-6),to:t0};if(p==="p30")return{from:add(-29),to:t0};if(p==="n30")return{from:t0,to:add(30)};
+  if(p==="month"){const a=new Date(d.getFullYear(),d.getMonth(),1),b=new Date(d.getFullYear(),d.getMonth()+1,0);return{from:iso(a),to:iso(b)}}return{from:"",to:""}}
+const pct1=v=>v==null?"–":nf1.format(v*100)+"%";
+const tl=v=>v==null?"–":(Math.abs(v)>=1e5?nf0.format(v):new Intl.NumberFormat("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v))+" TL";
+function emptyBox(title,detail,fix,fixLabel){return`<div class="ch-empty"><b>${esc(title)}</b><span>${esc(detail)}</span>${fix?`<button class="btn btn-sm" type="button" data-go="${esc(fix)}">${esc(fixLabel||"Veriyi tamamla")}</button>`:""}</div>`}
+function dataTable(head,rows){return`<details class="ch-table"><summary>Tabloyu göster</summary><div class="tbl-wrap"><table><thead><tr>${head.map(h=>`<th class="${h.r?"r":""}">${esc(h.l)}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${head[i].r?"r num":""}">${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div></details>`}
+
+function vYonetim(R){Chart.specs=[];const t0=today(),F=dashF();
+  if(F.preset&&F.preset!=="custom")Object.assign(F,presetRange(F.preset,t0));
+  const f=Dash.parseF(F),pp=Dash.partProducts(S,R);
+  const O=Dash.orders(S,f,t0),P=Dash.production(S,f,pp),OE=Dash.oee(S,P.recs),MP=Dash.machinePlan(S,R,f,pp,t0),ST=Dash.stock(R,f),C=Dash.cost(S,R),G=Dash.gaps(S,R);
+  const goMachine=c=>setDashF({machine:F.machine===c?"":c}),goProduct=c=>setDashF({product:F.product===c?"":c});
+  const prods=[...new Set(S.orders.map(o=>o.product))].sort((a,b)=>a.localeCompare(b,"tr",{numeric:true}));
+  const groups=[...new Set(prods.map(p=>String(p).includes("-")?String(p).split("-")[0]+"-":"").filter(Boolean))];
+  const anyF=f.from||f.to||f.machine||f.product;
+  const badG=G.filter(g=>g.sev==="bad").length,warnG=G.filter(g=>g.sev==="warn").length;
+  const sevPill={bad:"pill-bad",warn:"pill-warn",info:"pill-info",ok:"pill-ok"},sevTxt={bad:"Eksik",warn:"Kısmi",info:"Bilgi",ok:"Tamam"};
+
+  // KPI'lar
+  const loadT=MP.reduce((a,m)=>a+m.load,0),capT=MP.reduce((a,m)=>a+m.cap,0);
+  const crit=ST.filter(r=>r.hasCard&&(r.level==="bad"||r.level==="warn")),noCardSt=ST.filter(r=>!r.hasCard).length;
+  const cProds=C.products.filter(p=>Dash.prodMatch(p.code,f.product)),cOk=cProds.filter(p=>p.total!=null),cTot=cOk.reduce((a,p)=>a+p.total,0);
+  const kpi=(label,val,foot,cls)=>`<div class="kpi ${cls||""}"><span class="kpi-label">${label}</span><span class="kpi-val">${val}</span><span class="kpi-foot">${foot}</span></div>`;
+
+  // 1 · Üretim gerçekleşmeleri
+  const sGood={name:"Sağlam",color:COL.c1},sScrap={name:"Fire",color:COL.c2};
+  const prodHtml=P.recs.length?`<div class="ch-split"><div class="ch-main">${Chart.legend([sGood,sScrap])}${Chart.slot("vbar",{cats:P.days.map(d=>({key:d.date,label:fmtD(d.date),short:fmtDs(parseISO(d.date))})),series:[{...sGood,values:P.days.map(d=>d.good)},{...sScrap,values:P.days.map(d=>d.scrap)}],unit:" ad"},"Günlük üretim")}</div>
+      <div class="oee">${[["OEE",OE.OEE],["Kullanılabilirlik",OE.A],["Performans",OE.P],["Kalite",OE.Q]].map(([l,v],i)=>`<div class="oee-t ${i?"":"oee-main"}"><span>${l}</span><b>${v==null?"Hesaplanamıyor":pct1(v)}</b></div>`).join("")}
+        ${OE.why.length?`<div class="hint">${esc(OE.why.join(" · "))}</div>`:""}<div class="hint">Fire oranı ${pct1(P.T.scrapRate)} · çalışma ${nf1.format(OE.run)} sa · duruş ${nf1.format(OE.down)} sa</div></div></div>
+      ${P.reasons.length?`<h3 class="ch-sub">Duruş nedenleri (saat)</h3>${Chart.slot("hbar",{rows:P.reasons.slice(0,8).map(([k,v])=>({key:k,label:k,values:[v]})),series:[{name:"Duruş",color:COL.c4}],fmt:v=>nf1.format(v),unit:" sa"},"Duruş nedenleri")}`:""}
+      ${dataTable([{l:"Tarih"},{l:"Sağlam",r:1},{l:"Fire",r:1}],P.days.map(d=>[fmtD(d.date),nf0.format(d.good),nf0.format(d.scrap)]))}`
+    :emptyBox("Üretim gerçekleşmesi verisi yok",(S.production||[]).length?"Seçili filtrelerde üretim kaydı yok.":"Sistemde hiç üretim kaydı yok. Sahte veri gösterilmez; Üretim Girişi ekranından günlük sağlam/fire adetlerini, çalışma ve duruş sürelerini girin ya da Excel ile yükleyin.",(S.production||[]).length?null:"uretim","Üretim Girişi'ne git");
+
+  // 2 · Makine performansı
+  const utilColor=u=>u==null?COL.muted:u>1?COL.bad:u>0.85?COL.warn:COL.c1;
+  const mpRows=MP.filter(m=>m.cap>0).sort((a,b)=>(b.util||0)-(a.util||0));
+  const mxU=Math.max(1.05,...mpRows.map(m=>m.util||0));
+  const oeeByM=Object.entries(P.byM).map(([m,recs])=>({m,o:Dash.oee(S,recs)})).filter(x=>x.o.OEE!=null).sort((a,b)=>b.o.OEE-a.o.OEE);
+  const machHtml=(mpRows.length?`<h3 class="ch-sub">Plan doluluğu <span class="hint">· kesikli çizgi %100 kapasite · çubuğa tıklayınca makine filtrelenir</span></h3>${Chart.slot("hbar",{rows:mpRows.map(m=>({key:m.code,label:m.code,sub:`${m.ton} ton${m.robot?" · robot":""} · ${m.jobs} iş`,values:[m.util||0],color:utilColor(m.util),valueText:`${pct(m.util||0)}${m.util>1?" ⚠":""}`,tipExtra:`<div class="t-f">${nf1.format(m.load)} / ${nf0.format(m.cap)} saat</div>`})),series:[{name:"Plan doluluğu",color:COL.c1}],fmt:v=>pct(v),ref:1,refLabel:"%100 kapasite",max:mxU,onClick:goMachine},"Plan doluluğu")}
+      <div class="ch-legend"><span><i style="background:var(--s1)"></i>%85'e kadar</span><span><i style="background:var(--warn)"></i>%85–100 · yoğun</span><span><i style="background:var(--bad)"></i>%100 üstü · kapasite aşıyor</span></div>`:emptyBox("Plan doluluğu yok","Seçili filtrelerde planlanmış iş ya da kapasitesi tanımlı makine yok.",null))
+    +`<h3 class="ch-sub">Gerçekleşen verim (OEE)</h3>`+(oeeByM.length?Chart.slot("hbar",{rows:oeeByM.map(x=>({key:x.m,label:x.m,sub:`K ${pct1(x.o.A)} · P ${pct1(x.o.P)} · Ka ${pct1(x.o.Q)}`,values:[x.o.OEE]})),series:[{name:"OEE",color:COL.c3}],fmt:v=>pct1(v),max:1,onClick:goMachine},"OEE")
+      :emptyBox("OEE hesaplanamıyor",P.recs.length?"Üretim kayıtlarında çalışma/duruş süresi ya da kalıp çevrim süresi eksik.":"Üretim gerçekleşmesi girilmeden makine verimi ölçülemez. Yukarıdaki plan doluluğu sadece plandır.",P.recs.length?"uretim":null));
+
+  // 3 · Açık siparişler
+  const sOrd={name:"Kalan sipariş",color:COL.c1};
+  const topP=O.prods.slice().sort((a,b)=>(b.net??b.qty)-(a.net??a.qty)).slice(0,12);
+  const ordHtml=O.lines?`<h3 class="ch-sub">Termine göre (haftalık)${O.est?` <span class="pill pill-warn">${O.est} termin tahmini</span>`:""}</h3>${Chart.slot("vbar",{cats:O.buckets.map(b=>({key:b.key,label:b.label,short:b.short,color:b.late?COL.bad:null})),series:[{...sOrd,values:O.buckets.map(b=>b.qty)}],unit:" ad"},"Termine göre sipariş")}
+      ${O.overdue?`<div class="hint"><span class="pill pill-bad">Gecikmiş</span> ${O.overdue} satır · ${nf0.format(O.overQty)} adet termini geçmiş</div>`:""}
+      <h3 class="ch-sub">En yüksek net ihtiyaç <span class="hint">· tıklayınca ürün filtrelenir</span></h3>${Chart.slot("hbar",{rows:topP.map(p=>({key:p.code,label:p.code,sub:`${p.lines} sipariş · stok ${p.stock==null?"bilinmiyor":nf0.format(p.stock)}`,values:p.net==null?[0,p.qty]:[p.net,0],valueText:p.net==null?`${nf0.format(p.qty)} (stok yok)`:nf0.format(p.net)})),series:[{name:"Net ihtiyaç",color:COL.c1},{name:"Kalan (stok bilinmiyor)",color:COL.muted}],onClick:goProduct},"Net ihtiyaç")}
+      ${O.agingN?`<h3 class="ch-sub">Sipariş yaşı (adet)</h3>${Chart.slot("hbar",{rows:Object.entries(O.aging).map(([k,v])=>({key:k,label:k,values:[v]})),series:[{name:"Kalan sipariş",color:COL.c1}],unit:" ad"},"Sipariş yaşı")}`:""}
+      ${dataTable([{l:"Mamul"},{l:"Satır",r:1},{l:"Kalan",r:1},{l:"Stok",r:1},{l:"Net ihtiyaç",r:1},{l:"En erken termin"}],O.prods.slice().sort((a,b)=>(b.net??b.qty)-(a.net??a.qty)).map(p=>[`<span class="code">${esc(p.code)}</span>`,p.lines,nf0.format(p.qty),p.stock==null?"–":nf0.format(p.stock),p.net==null?"–":nf0.format(p.net),fmtD(p.due)]))}`
+    :emptyBox("Açık sipariş yok","Seçili filtrelerde sipariş bulunamadı.",null);
+
+  // 4 · Kritik stoklar
+  const critTop=crit.slice(0,10);
+  const stHtml=ST.length?(critTop.length?Chart.legend([{name:"Stok + yolda",color:COL.c3},{name:"Dönem ihtiyacı",color:COL.c2}])+Chart.slot("hbar",{rows:critTop.map(r=>({key:r.code,label:r.code,sub:`${r.type} · ${r.status}${r.orderBy?` · son sipariş ${fmtD(r.orderBy)}`:""}`,values:[r.stock+r.inc,r.fGross],valueText:`${r.order>0?`${nf0.format(Math.ceil(r.order))} ${r.unit} sipariş`:"sipariş yok"}`})),series:[{name:"Stok + yolda",color:COL.c3},{name:"Dönem ihtiyacı",color:COL.c2}],fmt:v=>Chart.short(v),grouped:true},"Kritik stok"):`<div class="ch-ok"><span class="pill pill-ok">Yeterli</span> Stok kartı olan malzemelerde kritik durum yok.</div>`)
+      +(noCardSt?`<div class="hint" style="margin-top:8px"><span class="pill pill-warn">Bilinmiyor</span> ${noCardSt} malzemenin stok kartı yok; durumu değerlendirilemiyor. <button class="btn btn-sm" type="button" data-go="malzemeler">Stokları gir</button></div>`:"")
+      +dataTable([{l:"Malzeme"},{l:"Tip"},{l:"Dönem ihtiyacı",r:1},{l:"Stok",r:1},{l:"Yolda",r:1},{l:"Sipariş önerisi",r:1},{l:"Son sipariş"},{l:"Durum"}],ST.map(r=>[`<span class="code">${esc(r.code)}</span>`,esc(r.type),`${Chart.short(r.fGross)} ${r.unit}`,r.hasCard?nf0.format(r.stock):"–",r.hasCard?nf0.format(r.inc):"–",r.order>0?nf0.format(Math.ceil(r.order)):"–",r.orderBy?fmtD(r.orderBy):"–",pill(r.hasCard?r.level:"warn",r.hasCard?r.status:"Stok kartı yok")]))
+    :emptyBox("Malzeme ihtiyacı hesaplanamadı","Gramaj ya da reçetede satınalma kalemi girilmediği için MRP'de malzeme yok.","kaliplar","Gramajları gir");
+
+  // 5 · Maliyet
+  const sMat={name:"Hammadde + boya",color:COL.c1},sMach={name:"Makine",color:COL.c2},sBuy={name:"Satınalma kalemleri",color:COL.c3};
+  const cTop=cOk.slice().sort((a,b)=>b.total-a.total).slice(0,10);
+  const missCount={};cProds.filter(p=>p.total==null).forEach(p=>p.miss.forEach(m=>{const k=/ fiyatı$/.test(m)?"malzeme fiyatı":/ saat maliyeti$/.test(m)?"makine saat maliyeti":/kalıp\/reçete$/.test(m)?"alt parça kalıbı/reçetesi":m;missCount[k]=(missCount[k]||0)+1}));
+  const mCost=MP.filter(m=>m.hourCost!=null&&m.load>0).map(m=>({code:m.code,v:m.load*m.hourCost})).sort((a,b)=>b.v-a.v);
+  const buyVal=C.buyRows.filter(r=>r.value!=null),buyTot=buyVal.reduce((a,r)=>a+r.value,0);
+  const costHtml=`<div class="cost-cov"><b>${cOk.length} / ${cProds.length}</b> mamulde maliyet hesaplanabiliyor${Object.keys(missCount).length?`<div class="hint">Eksikler: ${Object.entries(missCount).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`${esc(k)} (${n} mamul)`).join(" · ")}</div>`:""}</div>`
+    +(cTop.length?`<h3 class="ch-sub">Açık ihtiyacın maliyeti · mamul bazında</h3>${Chart.legend([sMat,sMach,sBuy])}${Chart.slot("hbar",{rows:cTop.map(p=>({key:p.code,label:p.code,sub:`birim ${tl(p.unit)} · ${nf0.format(p.need)} adet`,values:[p.mat*p.need,p.mach*p.need,p.buy*p.need],valueText:tl(p.total)})),series:[sMat,sMach,sBuy],fmt:tl,onClick:goProduct},"Mamul maliyeti")}`
+      :emptyBox("Mamul maliyeti hesaplanamıyor","Sahte fiyat kullanılmaz. Malzemelere birim fiyat, makinelere saat maliyeti ve kalıplara gramaj girildiğinde mamul maliyetleri burada görünür.","malzemeler","Fiyatları gir"))
+    +(mCost.length?`<h3 class="ch-sub">Planlanan makine maliyeti</h3>${Chart.slot("hbar",{rows:mCost.map(m=>({key:m.code,label:m.code,values:[m.v]})),series:[{name:"Plan saati × saat maliyeti",color:COL.c2}],fmt:tl,onClick:goMachine},"Makine maliyeti")}`:"")
+    +(C.buyRows.length?`<div class="hint" style="margin-top:10px">Satınalma önerisi tutarı: <b>${buyVal.length?tl(buyTot):"hesaplanamıyor"}</b> ${buyVal.length<C.buyRows.length?`(${C.buyRows.length-buyVal.length} kalemin fiyatı yok)`:""}</div>`:"")
+    +(cProds.length?dataTable([{l:"Mamul"},{l:"Net ihtiyaç",r:1},{l:"Birim maliyet",r:1},{l:"Toplam",r:1},{l:"Eksik"}],cProds.slice().sort((a,b)=>(b.total??-1)-(a.total??-1)).map(p=>[`<span class="code">${esc(p.code)}</span>`,nf0.format(p.need),tl(p.unit),tl(p.total),esc(p.miss.slice(0,3).join(", ")+(p.miss.length>3?" …":""))])):"");
+
+  $("#view").innerHTML=`
+  ${S.demo?`<div class="panel"><div class="panel-body hint"><span class="pill pill-warn">Örnek veri</span> Bu panel şu an örnek verileri gösteriyor. Örnek veride üretim gerçekleşmesi ve fiyat yoktur.</div></div>`:""}
+  <div class="panel dash-filters"><div class="panel-body df-row">
+    <div class="field"><label for="dfp">Tarih</label><select id="dfp" class="sel">${[["all","Tümü"],["p7","Son 7 gün"],["p30","Son 30 gün"],["month","Bu ay"],["n30","Önümüzdeki 30 gün"],["custom","Özel aralık"]].map(([k,t])=>`<option value="${k}" ${F.preset===k?"selected":""}>${t}</option>`).join("")}</select></div>
+    <div class="field"><label for="dff">Başlangıç</label><input id="dff" type="date" class="sel" value="${esc(F.from||"")}"></div>
+    <div class="field"><label for="dft">Bitiş</label><input id="dft" type="date" class="sel" value="${esc(F.to||"")}"></div>
+    <div class="field"><label for="dfm">Makine</label><select id="dfm" class="sel"><option value="">Tüm makineler</option>${S.machines.map(m=>`<option ${F.machine===m.code?"selected":""}>${esc(m.code)}</option>`).join("")}</select></div>
+    <div class="field"><label for="dfu">Ürün / grup</label><input id="dfu" class="sel" list="dful" value="${esc(F.product||"")}" placeholder="Tüm ürünler" autocomplete="off"><datalist id="dful">${groups.map(g=>`<option value="${esc(g)}">${esc(g)} grubu</option>`).join("")}${prods.slice(0,600).map(p=>`<option value="${esc(p)}">`).join("")}</datalist></div>
+    <div class="field df-act">${anyF?`<button class="btn" type="button" id="dfc">Filtreleri temizle</button>`:""}</div>
+  </div><div class="df-note hint">Tarih filtresi siparişlerde termine, planda iş saatlerine, üretimde kayıt tarihine, MRP'de ihtiyaç gününe uygulanır.</div></div>
+
+  <details class="panel gaps" ${badG?"open":""}><summary class="panel-head"><div><h2 class="panel-title">Veri durumu</h2><div class="panel-sub">${badG?`${badG} alan eksik`:"Eksik alan yok"}${warnG?` · ${warnG} alan kısmi`:""} · panel yalnızca gerçek kayıtları kullanır, eksikler tahminle doldurulmaz</div></div></summary>
+    <div class="gap-list">${G.map(g=>`<div class="gap"><span class="pill ${sevPill[g.sev]}">${sevTxt[g.sev]}</span><div class="gap-t"><b>${esc(g.title)}</b>${g.total?` <span class="num hint">${nf0.format(g.have)} / ${nf0.format(g.total)}</span>`:""}<div class="hint">${esc(g.detail)}</div></div>${g.fix&&g.sev!=="ok"?`<button class="btn btn-sm" type="button" data-go="${esc(g.fix)}">Tamamla</button>`:""}</div>`).join("")}</div></details>
+
+  <section class="kpis dash-kpis">
+    ${kpi("Açık sipariş",nf0.format(O.qty),`${nf0.format(O.lines)} satır · ${nf0.format(O.customers)} müşteri`)}
+    ${kpi("Net ihtiyaç",nf0.format(O.net),O.netUnknown?`${O.netUnknown} üründe stok bilinmiyor`:`${O.products} ürün · stok düşülmüş`)}
+    ${kpi("Plan doluluğu",capT?pct(loadT/capT):"–",`${nf0.format(loadT)} saat planlı iş`,capT&&loadT/capT>1?"is-bad":"")}
+    ${kpi("Gerçekleşen üretim",P.recs.length?nf0.format(P.T.good):"Veri yok",P.recs.length?`fire ${pct1(P.T.scrapRate)} · OEE ${OE.OEE==null?"–":pct1(OE.OEE)}`:"Üretim Girişi'nden kayıt girin",P.recs.length?"":"is-muted")}
+    ${kpi("Kritik stok",nf0.format(crit.length),noCardSt?`${noCardSt} kalemin stok kartı yok`:"stok kartı olan kalemler",crit.length?"is-bad":"")}
+    ${kpi("İhtiyaç maliyeti",cOk.length?tl(cTot):"Veri yok",cProds.length?`${cOk.length}/${cProds.length} mamulde hesaplanabildi`:"ihtiyaç yok",cOk.length?"":"is-muted")}
+  </section>
+
+  <section class="dash-grid">
+    <div class="panel ch-card span2"><div class="panel-head"><h2 class="panel-title">Üretim gerçekleşmeleri</h2><span class="panel-sub">Üretim Girişi kayıtları · ${nf0.format(P.recs.length)} kayıt</span></div><div class="panel-body">${prodHtml}</div></div>
+    <div class="panel ch-card"><div class="panel-head"><h2 class="panel-title">Makine performansı</h2><span class="panel-sub">Plan: takvim · Gerçekleşen: üretim kayıtları</span></div><div class="panel-body">${machHtml}</div></div>
+    <div class="panel ch-card"><div class="panel-head"><h2 class="panel-title">Açık siparişler</h2><span class="panel-sub">${nf0.format(O.products)} ürün · ${nf0.format(O.qty)} adet kalan</span></div><div class="panel-body">${ordHtml}</div></div>
+    <div class="panel ch-card"><div class="panel-head"><h2 class="panel-title">Kritik stoklar</h2><span class="panel-sub">MRP · seçili dönemin ihtiyacı</span></div><div class="panel-body">${stHtml}</div></div>
+    <div class="panel ch-card"><div class="panel-head"><h2 class="panel-title">Maliyet analizi</h2><span class="panel-sub">Standart maliyet: gramaj × fiyat + çevrim × saat maliyeti + reçete kalemleri</span></div><div class="panel-body">${costHtml}</div></div>
+  </section>`;
+  const v=$("#view");Chart.mountAll(v);
+  v.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
+  $("#dfp").onchange=e=>{const p=e.target.value;setDashF(p==="custom"?{preset:"custom"}:{preset:p,...presetRange(p,t0)})};
+  $("#dff").onchange=e=>setDashF({preset:"custom",from:e.target.value});$("#dft").onchange=e=>setDashF({preset:"custom",to:e.target.value});
+  $("#dfm").onchange=e=>setDashF({machine:e.target.value});$("#dfu").onchange=e=>setDashF({product:e.target.value.trim()});
+  const c=$("#dfc");if(c)c.onclick=()=>setDashF({preset:"all",from:"",to:"",machine:"",product:""});
+}
+let dashRT;window.addEventListener("resize",()=>{if(current!=="yonetim")return;clearTimeout(dashRT);dashRT=setTimeout(()=>Chart.mountAll($("#view")),150)});
+
+/* ---------- generic CRUD ---------- */
+const DEF={
+  siparisler:{list:()=>S.orders,title:"Sipariş",cols:[
+      {k:"no",l:"Sipariş No",code:1},{k:"customer",l:"Müşteri"},{k:"product",l:"Mamul",code:1},{k:"qty",l:"Adet",n:1},{k:"due",l:"Termin",d:1},{k:"extra",l:"Stok payı",p:1},{k:"stock",l:"Eldeki stok",n:1},{k:"prio",l:"Öncelik",n:1}],
+    fields:[{k:"no",l:"Sipariş No",req:1},{k:"customer",l:"Müşteri"},{k:"product",l:"Mamul kodu",req:1,list:()=>[...new Set(S.bom.map(b=>b.product))]},{k:"qty",l:"Sipariş adedi",type:"number",req:1},
+      {k:"due",l:"Termin",type:"date",req:1},{k:"extra",l:"Stok payı (%)",type:"number",pct:1,hint:"Siparişin üzerine üretilecek pay"},{k:"stock",l:"Eldeki mamul stoğu",type:"number",hint:"Aynı mamulün tüm siparişlerinden bir kez düşülür"},{k:"orderDate",l:"Sipariş tarihi",type:"date"},{k:"prio",l:"Öncelik",type:"number"}],
+    paste:["no","customer","product","qty","due","extra","stock","orderDate"],pasteHint:"Sipariş No · Müşteri · Mamul · Adet · Termin (gg.aa.yyyy) · Stok payı % · Eldeki stok · Sipariş tarihi"},
+  agac:{list:()=>S.bom,title:"Reçete satırı",cols:[{k:"product",l:"Mamul",code:1},{k:"part",l:"Bileşen",code:1},{k:"name",l:"Bileşen adı"},{k:"cat",l:"Grup",f:b=>catOf(b)},{k:"qty",l:"Miktar",f:b=>nfQ.format(+b.qty||0)},{k:"unit",l:"Birim",f:b=>b.unit||defUnit(b)},{k:"scrap",l:"Fire",p:1}],
+    fields:[{k:"product",l:"Mamul kodu",req:1,list:()=>[...new Set([...S.orders.map(o=>o.product),...S.bom.map(b=>b.product)])]},{k:"part",l:"Bileşen kodu",req:1,list:()=>[...new Set([...S.molds.map(k=>k.part),...(S.materials||[]).map(m=>m.code)])]},{k:"name",l:"Bileşen adı"},
+      {k:"cat",l:"Kalem grubu",opts:CATS,hint:"Yarı mamul enjeksiyonda üretilir; diğerleri satınalma ihtiyacına (MRP) girer"},{k:"qty",l:"Mamul başına miktar",type:"number",req:1,hint:"Örn. 50'li koli için 0,02"},{k:"unit",l:"Birim",opts:["adet","kg","gr","m","lt"]},{k:"scrap",l:"Fire (%)",type:"number",pct:1,hint:"İhtiyaç bu oranda artırılır"}],
+    paste:["product","part","name","cat","qty","unit","scrap"],pasteHint:"Mamul · Bileşen kodu · Bileşen adı · Grup (Yarı mamul/Hammadde/Boya/Bağlantı elemanı/Ambalaj/Etiket/Diğer) · Miktar · Birim · Fire %"},
+  kaliplar:{list:()=>S.molds,title:"Kalıp",cols:[{k:"code",l:"Kalıp",code:1},{k:"part",l:"Parça",code:1},{k:"cav",l:"Göz",n:1},{k:"cycle",l:"Çevrim sn",n:1},{k:"partG",l:"Parça g",n:1},{k:"runnerG",l:"Yolluk g",n:1},{k:"mat",l:"Hammadde",mat:1},{k:"mode",l:"Çalışma",f:k=>k.mode||"Otomatik"},{k:"mb",l:"MB",p:1},{k:"mbCode",l:"Boya",code:1},{k:"machines",l:"Uygun makineler",ms:1},{k:"_rate",l:"Adet/saat",n:1,f:k=>(+k.cycle>0)?3600/k.cycle*(+k.cav||1):0}],
+    fields:[{k:"code",l:"Kalıp kodu",req:1},{k:"part",l:"Ürettiği parça",req:1},{k:"cav",l:"Göz sayısı",type:"number",req:1},{k:"cycle",l:"Çevrim süresi (sn)",type:"number",req:1},
+      {k:"partG",l:"Parça gramajı (g)",type:"number"},{k:"runnerG",l:"Yolluk / vuruş (g)",type:"number"},{k:"mat",l:"Hammadde",req:1,list:()=>[...new Set(S.molds.map(m=>m.mat))]},{k:"mb",l:"Masterbatch (%)",type:"number",pct:1},
+      {k:"mbCode",l:"Boya / masterbatch kodu",hint:"Boşsa boyasız; oran girilmemişse Ayarlar'daki varsayılan oran kullanılır"},{k:"mode",l:"Çalışma şekli",opts:["Otomatik","Robotlu","Operatörlü"]},{k:"machines",l:"Uygun makineler",ms:1,full:1}],
+    paste:["code","part","cav","cycle","partG","runnerG","mat","mb","machines","mode","mbCode"],pasteHint:"Kalıp · Parça · Göz · Çevrim sn · Parça g · Yolluk g · Hammadde · MB % · Uygun makineler (M01,M02) · Çalışma (Otomatik/Robotlu/Operatörlü) · Boya kodu"},
+  makineler:{list:()=>S.machines,title:"Makine",cols:[{k:"code",l:"Makine",code:1},{k:"ton",l:"Tonaj",n:1},{k:"shifts",l:"Vardiya",n:1},{k:"hours",l:"Saat/vardiya",n:1},{k:"eff",l:"Verim",p:1},{k:"robot",l:"Robot",f:m=>hasRobot(m)?"Var":"Yok"},{k:"rPart",l:"Çalışan iş",code:1},{k:"rRemain",l:"Kalan",f:m=>m.rPart?(m.rRemain===""||m.rRemain==null?"tümü":nf0.format(m.rRemain)):""},{k:"_net",l:"Net saat/gün",n:1,f:m=>netHours(m),dec:1},{k:"hourCost",l:"TL / saat",f:m=>m.hourCost===""||m.hourCost==null?"":nfQ.format(+m.hourCost)}],
+    fields:[{k:"code",l:"Makine kodu",req:1,hint:"Kısa ve benzersiz, örn. M09"},{k:"ton",l:"Tonaj",type:"number"},{k:"shifts",l:"Vardiya / gün",type:"number",def:3},{k:"hours",l:"Saat / vardiya",type:"number",def:7.5},{k:"eff",l:"Verim (%)",type:"number",pct:1,def:.85,hint:"Duruş ve kalıp değişimleri payı"},{k:"robot",l:"Robot",opts:["Yok","Var"]},{k:"rPart",l:"Şu an çalışan parça",list:()=>S.molds.map(k=>k.part),hint:"Boş bırakırsanız makine boş kabul edilir"},{k:"rRemain",l:"Bu iş için kalan adet",type:"number",hint:"Boşsa parçanın sipariş ihtiyacının tamamı"},{k:"hourCost",l:"Saat maliyeti (TL)",type:"number",hint:"Makine, işçilik ve enerji dahil saat başına maliyet. Maliyet analizinde kullanılır."}],
+    paste:["code","ton","shifts","hours","eff","robot","hourCost"],pasteHint:"Makine · Tonaj · Vardiya · Saat/vardiya · Verim % · Robot (Var/Yok) · Saat maliyeti TL"},
+  uretim:{list:()=>S.production||(S.production=[]),title:"Üretim kaydı",cols:[{k:"date",l:"Tarih",d:1},{k:"shift",l:"Vardiya"},{k:"machine",l:"Makine",code:1},{k:"part",l:"Parça",code:1},{k:"good",l:"Sağlam",n:1},{k:"scrap",l:"Fire",n:1},{k:"runH",l:"Çalışma sa",f:r=>r.runH===""||r.runH==null?"":nf1.format(+r.runH)},{k:"downH",l:"Duruş sa",f:r=>r.downH===""||r.downH==null?"":nf1.format(+r.downH)},{k:"reason",l:"Duruş nedeni"}],
+    fields:[{k:"date",l:"Üretim tarihi",type:"date",req:1},{k:"shift",l:"Vardiya",opts:["1","2","3"]},{k:"machine",l:"Makine",req:1,list:()=>S.machines.map(m=>m.code)},{k:"part",l:"Parça kodu",req:1,list:()=>S.molds.map(k=>k.part)},
+      {k:"good",l:"Sağlam adet",type:"number",req:1},{k:"scrap",l:"Fire adet",type:"number",hint:"Fire yoksa 0 yazın"},{k:"runH",l:"Çalışma süresi (saat)",type:"number",hint:"Makinenin bu işte fiilen bastığı süre"},{k:"downH",l:"Duruş süresi (saat)",type:"number",hint:"Duruş yoksa 0 yazın; boş kalırsa kullanılabilirlik hesaplanmaz"},
+      {k:"reason",l:"Duruş nedeni",list:()=>["Kalıp değişimi","Arıza","Malzeme bekleme","Operatör yok","Kalite / ayar","Planlı bakım","Elektrik / hava"]}],
+    paste:["date","shift","machine","part","good","scrap","runH","downH","reason"],pasteHint:"Tarih · Vardiya · Makine · Parça · Sağlam · Fire · Çalışma saat · Duruş saat · Duruş nedeni"}
+};
+DEF.malzemeler={list:()=>S.materials||(S.materials=[]),title:"Malzeme",cols:[{k:"code",l:"Kod",code:1},{k:"name",l:"Ad"},{k:"mtype",l:"Tip",f:r=>r.mtype||"Hammadde"},{k:"stock",l:"Stok",n:1},{k:"incoming",l:"Yolda",n:1},{k:"incomingDate",l:"Geliş",d:1},{k:"lead",l:"Tedarik gün",n:1},{k:"safety",l:"Emniyet stoğu",n:1},{k:"moq",l:"Min. sipariş",n:1},{k:"price",l:"Birim fiyat TL",f:r=>r.price===""||r.price==null?"":nfQ.format(+r.price)}],
+  fields:[{k:"code",l:"Malzeme kodu",req:1,hint:"Kalıplardaki hammadde / boya kodu ya da ürün ağacındaki satınalma kodu ile aynı olmalı"},{k:"name",l:"Malzeme adı"},{k:"mtype",l:"Tip",opts:["Hammadde","Boya","Bağlantı elemanı","Ambalaj","Etiket","Yarı mamul","Diğer"]},{k:"stock",l:"Eldeki stok",type:"number",hint:"Hammadde ve boya için kg, parça için adet"},{k:"incoming",l:"Yoldaki / açık satınalma",type:"number"},{k:"incomingDate",l:"Yoldakinin geliş tarihi",type:"date",hint:"Boşsa hemen kullanılabilir sayılır"},{k:"lead",l:"Tedarik süresi (gün)",type:"number"},{k:"safety",l:"Emniyet stoğu",type:"number"},{k:"moq",l:"Minimum sipariş miktarı",type:"number"},{k:"price",l:"Birim fiyat (TL)",type:"number",hint:"Hammadde ve boya için TL/kg, diğerleri için TL/adet. Maliyet analizinde kullanılır."}],
+  paste:["code","name","mtype","stock","incoming","incomingDate","lead","safety","moq","price"],pasteHint:"Kod · Ad · Tip (Hammadde/Boya/Bağlantı elemanı/Ambalaj/Etiket/Diğer) · Stok · Yolda · Geliş tarihi · Tedarik gün · Emniyet stoğu · Min. sipariş · Birim fiyat TL"};
+DEF.kaliplar.importExtra=[{k:"_auto",l:"Otomatik çalışır mı? (Evet/Hayır)"}];
+function cell(c,r){const v=c.f?c.f(r):r[c.k];
+  if(c.ms)return(v||[]).map(x=>`<span class="mchip">${esc(x)}</span>`).join("");
+  if(c.mat)return matTag(v);
+  if(c.d)return`<span class="num">${fmtD(v)}</span>`;
+  if(c.p)return`<span class="num">${pct(+v||0)}</span>`;
+  if(c.n)return`<span class="num">${c.dec?nf1.format(+v||0):nf0.format(+v||0)}</span>`;
+  return c.code?`<span class="code">${esc(v)}</span>`:esc(v)}
+function vCrud(id){
+  const d=DEF[id];const q=(ui.q[id]||"").toLowerCase();
+  const rows=d.list().filter(r=>!q||d.cols.some(c=>String(c.f?"":Array.isArray(r[c.k])?r[c.k].join(","):r[c.k]??"").toLowerCase().includes(q)));
+  $("#view").innerHTML=(id==="kaliplar"?famPanel():id==="agac"?recipePanel():"")+`<div class="panel"><div class="panel-head"><div><h2 class="panel-title">${esc(d.title)} listesi</h2><div class="panel-sub">${d.list().length} kayıt · satıra tıklayıp düzenleyin</div></div>
+    <div class="toolbar"><input class="search" id="q-${id}" type="search" placeholder="Ara" value="${esc(ui.q[id]||"")}" aria-label="Ara">
+    <button class="btn" type="button" id="pasteBtn"><svg viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>Excel'den yapıştır</button>
+    <button class="btn" type="button" id="fileBtn"><svg viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M4 15v5h16v-5"/></svg>Excel dosyası</button><input type="file" id="fileIn" accept=".xlsx,.xls,.xlsm,.csv" hidden>
+    <button class="btn btn-primary" type="button" id="addBtn"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni ${esc(d.title.toLowerCase())}</button></div></div>
+    <div class="tbl-wrap"><table><thead><tr>${d.cols.map(c=>`<th class="${c.n||c.p?"r":""}">${esc(c.l)}</th>`).join("")}</tr></thead><tbody>
+    ${rows.map(r=>`<tr class="clickable" data-id="${esc(r.id)}" tabindex="0">${d.cols.map(c=>`<td class="${c.n||c.p?"r":""}">${cell(c,r)}</td>`).join("")}</tr>`).join("")||`<tr><td colspan="${d.cols.length}" class="empty">${q?"Aramaya uyan kayıt yok.":"Henüz kayıt yok. Yeni ekleyin ya da Excel'den yapıştırın."}</td></tr>`}
+    </tbody></table></div></div>`;
+  const qi=$("#q-"+id);qi.oninput=()=>{ui.q[id]=qi.value;const pos=qi.selectionStart;vCrud(id);const n=$("#q-"+id);n.focus();n.setSelectionRange(pos,pos)};
+  $("#addBtn").onclick=()=>openForm(id,null,id==="uretim"?{date:today(),shift:"1"}:undefined);
+  if(id==="kaliplar")$("#view").querySelectorAll("[data-fam]").forEach(c=>c.onchange=()=>{S.family=S.family||{};if(c.checked)S.family[c.dataset.fam]=true;else delete S.family[c.dataset.fam];save();renderNav();
+    toast(c.checked?`Kalıp ${c.dataset.fam} aile kalıbı: parçaları birlikte basılacak`:`Kalıp ${c.dataset.fam} ayrı ayrı planlanacak`)});
+  if(id==="agac"){const rp=$("#recP");if(rp)rp.onchange=()=>{ui.recProd=rp.value.trim();vCrud(id)};const ra=$("#recAdd");if(ra)ra.onclick=()=>openForm("agac",null,{product:ui.recProd})}
+  $("#pasteBtn").onclick=()=>openPaste(id);
+  $("#fileBtn").onclick=()=>$("#fileIn").click();
+  $("#fileIn").onchange=e=>{const f=e.target.files[0];if(f)openFile(id,f)};
+  $("#view").querySelectorAll("tr[data-id]").forEach(tr=>{const open=()=>openForm(id,d.list().find(r=>r.id===tr.dataset.id));tr.onclick=open;tr.onkeydown=e=>{if(e.key==="Enter")open()}});
+}
+const vSiparis=()=>vCrud("siparisler"),vAgac=()=>vCrud("agac"),vKalip=()=>vCrud("kaliplar"),vMakine=()=>vCrud("makineler");
+
+function closeModal(){$("#modalRoot").innerHTML=""}
+function modal(title,body,foot){
+  $("#modalRoot").innerHTML=`<div class="modal-bg" id="mbg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="modal-head"><h2 id="mt">${esc(title)}</h2><button class="btn btn-ghost" type="button" id="mx" style="margin-left:auto" aria-label="Kapat">✕</button></div>${body}<div class="modal-foot">${foot}</div></div></div>`;
+  $("#mx").onclick=closeModal;$("#mbg").onclick=e=>{if(e.target.id==="mbg")closeModal()};
+  const f=$("#modalRoot").querySelector("input,select,textarea");if(f)f.focus();
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+function openForm(id,rec,pre){
+  const d=DEF[id];const isNew=!rec;const r=rec||pre||{};
+  const body=`<form id="frm" class="modal-body">${d.fields.map(f=>{const v=r[f.k];const fid="f-"+f.k;
+    if(f.ms){return`<div class="field full"><label>${esc(f.l)}</label><div class="checks">${S.machines.map(m=>`<label><input type="checkbox" name="ms" value="${esc(m.code)}" ${(v||[]).includes(m.code)?"checked":""}>${esc(m.code)}</label>`).join("")}</div><span class="hint">Bu kalıbın bağlanabildiği makineler</span></div>`}
+    if(f.opts)return`<div class="field"><label for="${fid}">${esc(f.l)}</label><select id="${fid}" name="${f.k}">${f.opts.map(o=>`<option ${o===(v||f.opts[0])?"selected":""}>${esc(o)}</option>`).join("")}</select></div>`;
+    const val=f.pct&&v!=null&&v!==""?Math.round(v*1000)/10:(v??"");
+    const dl=f.list?`<datalist id="dl-${f.k}">${f.list().map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`:"";
+    return`<div class="field ${f.full?"full":""}"><label for="${fid}">${esc(f.l)}${f.req?" *":""}</label><input id="${fid}" name="${f.k}" type="${f.type==="date"?"date":"text"}" ${f.type==="number"?'inputmode="decimal"':""} value="${esc(val)}" ${f.list?`list="dl-${f.k}"`:""} autocomplete="off">${dl}${f.hint?`<span class="hint">${esc(f.hint)}</span>`:""}</div>`}).join("")}
+    <div class="field full err" id="ferr" hidden></div></form>`;
+  const foot=`<button class="btn btn-primary" type="submit" form="frm">${isNew?"Ekle":"Kaydet"}</button><button class="btn" type="button" id="fc">Vazgeç</button>${isNew?"":`<span style="margin-left:auto;display:flex;gap:8px;align-items:center" id="delWrap"><button class="btn btn-danger" type="button" id="fdel">Sil</button></span>`}`;
+  modal((isNew?"Yeni ":"")+d.title+(isNew?"":" düzenle"),body,foot);
+  $("#fc").onclick=closeModal;
+  if(!isNew)$("#fdel").onclick=()=>{$("#delWrap").innerHTML=`<span class="hint">Silinsin mi?</span><button class="btn btn-danger" type="button" id="fdel2">Evet, sil</button>`;
+    $("#fdel2").onclick=()=>{const L=d.list();L.splice(L.indexOf(rec),1);S.demo=S.demo&&true;save();closeModal();render();toast("Kayıt silindi")}};
+  $("#frm").onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target);const out={};const errs=[];
+    for(const f of d.fields){if(f.ms){out[f.k]=fd.getAll("ms");continue}
+      let v=(fd.get(f.k)??"").toString().trim();
+      if(f.req&&!v){errs.push(`${f.l} boş olamaz`);continue}
+      if(f.type==="number"){if(v===""){out[f.k]=f.pct?0:"";continue}const n=num(v);if(isNaN(n)){errs.push(`${f.l} sayı olmalı`);continue}out[f.k]=f.pct?n/100:n}else out[f.k]=v}
+    const keyF=d.fields[0].k;if(id!=="agac"&&id!=="uretim"&&out[keyF]&&d.list().some(x=>x!==rec&&x[keyF]===out[keyF]))errs.push(`${out[keyF]} zaten kayıtlı`);
+    if(errs.length){const el=$("#ferr");el.hidden=false;el.textContent=errs.join(" · ");return}
+    if(isNew)d.list().push({id:uid(),...out});else Object.assign(rec,out);
+    save();closeModal();render();toast(isNew?"Kayıt eklendi":"Değişiklikler kaydedildi")};
+}
+function parseDate(s){s=String(s).trim();let m=s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/);if(m){const y=m[3].length===2?2000+ +m[3]:+m[3];return iso(new Date(y,m[2]-1,+m[1]))}
+  m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?s.slice(0,10):""}
+function normOpt(f,v){v=String(v||"").trim();
+  if(f.k==="robot")return(/var|evet|robot|^e$|^x$|^1$/i.test(v)&&!/yok|hay/i.test(v))?"Var":"Yok";
+  if(f.k==="mode")return/rob/i.test(v)?"Robotlu":/op|man|elle/i.test(v)?"Operatörlü":"Otomatik";
+  if(f.k==="mtype"){const c=catFromText(v);return c||(v&&/par|kom|sat|aksesuar/i.test(v)?"Diğer":"Hammadde")}
+  if(f.k==="cat"){const c=catFromText(v);return c||(/^yar|^üre|^ure/i.test(v)?"Yarı mamul":"")}
+  const hit=f.opts.find(o=>o.toLowerCase().slice(0,3)===v.toLowerCase().slice(0,3));return hit||f.opts[0]}
+const nrm=s=>String(s??"").toLocaleLowerCase("tr").replace(/ı/g,"i").replace(/ğ/g,"g").replace(/ü/g,"u").replace(/ş/g,"s").replace(/ö/g,"o").replace(/ç/g,"c").replace(/[^a-z0-9]/g,"");
+const SYN={
+  siparisler:{_sheet:["siparisler","siparis","aciksiparisler"],no:["siparisno","sipno","evrakno","belgeno","evraksirano"],customer:["musteri","cariismi","cariadi","cariunvani","cari","unvan"],product:["mamulkodu","stokkodu","kodu","urunkodu","mamul"],qty:["kalansiparismiktari","kalanmiktar","kalanadet","kalan","siparisadet","siparismiktar","miktar","adet"],due:["termin","termintarihi","teslimtarihi","sevktarihi"],extra:["stokfazlasi","stokpayi"],stock:["stokeldekimiktar","eldekimiktar","eldekistok","stokmiktari"],orderDate:["siparistarihi","evraktarihi"]},
+  agac:{_sheet:["mamulrecetesi","urunagaci","agac","bom","urunagaclari","recetesatirlari"],product:["mamulkodu","mamul","anaurun"],part:["bilesenkodu","altparcakodu","altparca","bilesen","parca"],name:["bilesenadi","altparcaadi","malzemeadi","stokadi","aciklama"],cat:["kalemgrubu","grup","grubu","malzemegrubu","tip","tur"],qty:["mamulbasinamiktar","mamulbasinaadet","mamulbasina","miktar","adet","carpan"],unit:["birim","birimi"],scrap:["fire","fireorani","kayip"]},
+  kaliplar:{_sheet:["kaliplar","kalip","urunrecetesi","recete"],code:["kalipkodu","kalipno","kalip"],part:["parcakodu","urunkodu","parca","stokkodu"],cav:["gozsayisi","goz","kavite"],cycle:["cevrimsn","cevrimsuresi","cevrim","cycle"],partG:["parcagramajig","parcagramaji","gramaj","agirlik"],runnerG:["yollukvurusg","yollukvurus","yollukgramaji","yolluk"],mat:["hammadde1kodu","hammaddekodu","hammadde","hammadde1","malzeme"],mb:["masterbatch","mb","boyaorani"],machines:["uygunmakineler","anamakine","alternatifmakine","makineler","makine"],mode:["calismasekli","calisma","robotlu","robot"],_auto:["otomatik","otomatikcalisma","otomatikmi"],mbCode:["boyakodu","masterbatchkodu","boya"]},
+  makineler:{_sheet:["makineler","makinelistesi","makine"],code:["makinekodu","makineno","makine"],ton:["tonaj","ton"],shifts:["vardiyagun","vardiyasayisi","vardiya"],hours:["saatvardiya","vardiyasaati","saat"],eff:["verim","oee"],robot:["robot"],hourCost:["saatmaliyeti","saatlikmaliyet","makinesaatmaliyeti","tlsaat","saatucreti"]},
+  uretim:{_sheet:["uretimgirisi","uretimkayitlari","uretim","gerceklesen","gerceklesme"],date:["uretimtarihi","tarih","date"],shift:["vardiya","vardiyano"],machine:["makinekodu","makineno","makine"],part:["parcakodu","stokkodu","urunkodu","parca","kodu"],good:["saglamadet","saglammiktar","saglam","uretilenmiktar","uretimmiktari","uretilen","miktar","adet"],scrap:["fireadet","firemiktari","fire","hurda","red"],runH:["calismasuresi","calismasaati","calisma"],downH:["durussuresi","durussaati","durus"],reason:["durusnedeni","neden","aciklama"]}
+};
+SYN.malzemeler={_sheet:["malzemeler","stoklar","stok","hammadde","malzeme"],code:["stokkodu","malzemekodu","hammaddekodu","kodu","kod"],name:["stokadi","stokismi","malzemeadi","ismi","adi","aciklama"],mtype:["malzemetipi","tip","tur","cinsi"],stock:["eldekimiktar","stokeldekimiktar","stokmiktari","mevcut","bakiye","stok","miktar"],incoming:["yoldaki","yoldakimiktar","bekleyensatinalma","aciksatinalma","verilensiparis","bekleyensiparis","yolda"],incomingDate:["gelistarihi","teslimtarihi","termin"],lead:["tedariksuresi","teminsuresi","leadtime","tedarikgun"],safety:["emniyetstogu","minimumstok","minstok","emniyet"],moq:["minsiparis","minimumsiparis","minsiparismiktari","moq"],price:["birimfiyat","birimfiyati","alisfiyati","fiyat","birimmaliyet","maliyet"]};
+const pickCell=(map,r,k)=>Array.isArray(map[k])?map[k].map(i=>r[i]).filter(x=>x!==""&&x!=null).join(k==="machines"?",":"-"):(map[k]==null?"":r[map[k]]);
+function autoMap(id,hdr){const d=DEF[id],syn=SYN[id],map={},used=new Set();const H=(hdr||[]).map(nrm);
+  const keys=[...d.paste,...(d.importExtra||[]).map(x=>x.k)];
+  for(const k of keys){const f=d.fields.find(x=>x.k===k);if(f&&f.ms){const ix=H.map((h,i)=>i).filter(i=>H[i]&&(syn[k]||[]).some(s=>H[i].includes(s))&&!/tonaj|sayisi|adet/.test(H[i]));if(ix.length){map[k]=ix;ix.forEach(i=>used.add(i))}}}
+  for(const pass of [0,1])for(const k of keys){if(map[k]!=null)continue;for(const s of syn[k]||[]){const i=H.findIndex((h,ix)=>!used.has(ix)&&h&&(pass?h.includes(s):h===s));if(i>=0){map[k]=i;used.add(i);break}}}
+  if(id==="siparisler"&&map.no==null){const a=H.indexOf("serino"),b=H.indexOf("sirano");if(a>=0&&b>=0)map.no=[a,b];else if(b>=0)map.no=b}
+  return map}
+function headerRow(id,rows){let best=0,bs=-1;for(let r=0;r<Math.min(10,rows.length);r++){const n=Object.keys(autoMap(id,rows[r])).length;if(n>bs){bs=n;best=r}}return best}
+function pickSheet(id,names){const syn=SYN[id]._sheet;let best=0,bs=-1;names.forEach((n,i)=>{const x=nrm(n);let s=0;syn.forEach((y,j)=>{if(x===y)s=Math.max(s,10-j);else if(x.includes(y))s=Math.max(s,5-j*.1)});if(s>bs){bs=s;best=i}});return best}
+function xDate(v){if(typeof v==="number"&&v>20000&&v<80000){const d=new Date(Math.round((v-25569)*86400000));return iso(new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()))}return parseDate(v)}
+function convRow(id,get){const d=DEF[id];const o={};
+  for(const k of d.paste){const f=d.fields.find(x=>x.k===k);const v=get(k);
+    if(f.ms)o[k]=String(v??"").split(/[,;\s/]+/).filter(Boolean);
+    else if(f.type==="date")o[k]=xDate(v);
+    else if(f.type==="number"){const n=typeof v==="number"?v:num(v);o[k]=(v===""||v==null||isNaN(n))?"":(f.pct?(String(v).includes("%")||n>1?n/100:n):n)}
+    else if(f.opts)o[k]=normOpt(f,v);
+    else o[k]=String(v??"").trim();
+    if(o[k]===""&&f.def!=null)o[k]=f.def}
+  if(id==="agac"&&!o.cat)o.cat=inferCat(o)||"Diğer";
+  if(id==="siparisler"&&!o.due&&o.orderDate){const dd=parseISO(o.orderDate);dd.setDate(dd.getDate()+(S.settings.leadDays==null?30:+S.settings.leadDays||0));o.due=iso(dd)}
+  if(id==="kaliplar"){const a=String(get("_auto")??"").trim();
+    const robotYes=/^(evet|e|var|x|1|robotlu)$/i.test(String(get("mode")??"").trim());
+    if(robotYes)o.mode="Robotlu";else if(o.mode!=="Operatörlü")o.mode=(a&&/^(hay|yok|h$|0)/i.test(a))?"Operatörlü":"Otomatik"}
+  return o}
+const validRow=(id,o)=>DEF[id].fields.filter(f=>f.req&&!f.ms).every(f=>o[f.k]!==""&&o[f.k]!=null)&&(id!=="siparisler"||+o.qty>0);
+const sheetRows=(wb,name)=>XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,raw:true,defval:"",blankrows:false});
+function readWb(file,cb){if(!window.XLSX){toast("Excel okuyucu yüklenemedi. Bağlantınızı kontrol edip sayfayı yenileyin.");return}
+  const rd=new FileReader();rd.onerror=()=>toast("Dosya okunamadı");
+  rd.onload=()=>{let wb;try{wb=XLSX.read(new Uint8Array(rd.result),{type:"array"})}catch(e){toast("Bu dosya okunamadı ("+String(e&&e.message||e).slice(0,80)+"). Excel'de .xlsx olarak kaydedip tekrar deneyin.");return}
+    try{cb(wb)}catch(e){toast("Dosya işlenirken hata: "+String(e&&e.message||e).slice(0,100))}};
+  rd.readAsArrayBuffer(file)}
+function openFile(id,file){readWb(file,wb=>mapDialog(id,wb,file.name))}
+function mapDialog(id,wb,fname){
+  const d=DEF[id];let si=pickSheet(id,wb.SheetNames),rows,hr,map,rep=false;
+  const prep=()=>{rows=sheetRows(wb,wb.SheetNames[si]);hr=headerRow(id,rows);map=autoMap(id,rows[hr])};prep();
+  const draw=()=>{const hdr=rows[hr]||[];
+    const data=rows.slice(hr+1).map(r=>convRow(id,k=>pickCell(map,r,k))).filter(o=>validRow(id,o));
+    const first=data[0]?d.paste.map(k=>Array.isArray(data[0][k])?data[0][k].join(","):(data[0][k]===""?"–":data[0][k])).join(" · "):"";
+    const body=`<div class="modal-body">
+      <div class="field full"><span class="hint">${esc(fname)} · sütunlar başlıklara göre otomatik eşleştirildi, yanlış olanı değiştirin</span></div>
+      <div class="field"><label for="xs">Sayfa</label><select id="xs">${wb.SheetNames.map((n,i)=>`<option value="${i}" ${i===si?"selected":""}>${esc(n)}</option>`).join("")}</select></div>
+      <div class="field"><label for="xh">Başlık satırı</label><select id="xh">${rows.slice(0,10).map((r,i)=>`<option value="${i}" ${i===hr?"selected":""}>${i+1}. satır</option>`).join("")}</select></div>
+      ${[...d.paste,...(d.importExtra||[]).map(x=>x.k)].map(k=>{const f=d.fields.find(x=>x.k===k)||d.importExtra.find(x=>x.k===k);
+        if(f.ms)return`<div class="field full"><label>${esc(f.l)} · birden fazla sütun seçilebilir</label><div class="checks">${hdr.map((h,i)=>String(h)===""?"":`<label><input type="checkbox" data-ms="${k}" value="${i}" ${(map[k]||[]).includes(i)?"checked":""}>${esc(h)}</label>`).join("")}</div></div>`;
+        return`<div class="field"><label for="xm-${k}">${esc(f.l)}${f.req?" *":""}</label><select id="xm-${k}" data-k="${k}"><option value="">Kullanma</option>${hdr.map((h,i)=>`<option value="${i}" ${map[k]===i?"selected":""}>${esc(h||("Sütun "+(i+1)))}</option>`).join("")}</select></div>`}).join("")}
+      <div class="field full"><label><input type="checkbox" id="xr" ${rep?"checked":""} style="width:auto;margin-right:6px">Mevcut ${esc(d.title.toLowerCase())} kayıtlarını silip bunlarla değiştir</label></div>
+      <div class="field full hint">${data.length?`${data.length} satır aktarılacak. İlk satır: ${esc(first)}`:"Aktarılacak satır yok. Zorunlu (*) alanların sütunlarını seçin."}</div></div>`;
+    modal(`Excel'den ${d.title.toLowerCase()} yükle`,body,`<button class="btn btn-primary" type="button" id="xgo" ${data.length?"":"disabled"}>${data.length} kaydı aktar</button><button class="btn" type="button" id="xc">Vazgeç</button>`);
+    $("#xs").onchange=e=>{si=+e.target.value;prep();draw()};
+    $("#xh").onchange=e=>{hr=+e.target.value;map=autoMap(id,rows[hr]);draw()};
+    $("#xr").onchange=e=>{rep=e.target.checked};
+    $("#modalRoot").querySelectorAll("select[data-k]").forEach(s=>s.onchange=()=>{if(s.value==="")delete map[s.dataset.k];else map[s.dataset.k]=+s.value;draw()});
+    $("#modalRoot").querySelectorAll("input[data-ms]").forEach(c=>c.onchange=()=>{const k=c.dataset.ms;map[k]=[...$("#modalRoot").querySelectorAll(`input[data-ms="${k}"]:checked`)].map(x=>+x.value);if(!map[k].length)delete map[k];draw()});
+    $("#xc").onclick=closeModal;
+    $("#xgo").onclick=()=>{const L=d.list();if(rep)L.length=0;data.forEach(o=>L.push({id:uid(),...o}));S.demo=false;save();closeModal();render();toast(`${data.length} kayıt aktarıldı`)}};
+  draw()}
+function importAll(wb){const ids=["makineler","kaliplar","agac","siparisler"],best={};
+  wb.SheetNames.forEach(n=>{let rows;try{rows=sheetRows(wb,n)}catch(e){return}if(!rows.length)return;
+    for(const id of ids){const hr=headerRow(id,rows);const map=autoMap(id,rows[hr]);
+      const data=rows.slice(hr+1).map(r=>convRow(id,k=>pickCell(map,r,k))).filter(o=>validRow(id,o));if(!data.length)continue;
+      const sc=data.length+(SYN[id]._sheet.some(y=>nrm(n).includes(y))?1e6:0);
+      if(!best[id]||sc>best[id].sc)best[id]={sc,data,n}}});
+  const owner={};for(const id of ids){const b=best[id];if(!b)continue;const o=owner[b.n];if(!o||b.sc>best[o].sc)owner[b.n]=id}
+  const res=[];for(const id of Object.values(owner)){const L=DEF[id].list();L.length=0;best[id].data.forEach(o=>L.push({id:uid(),...o}));res.push(`${best[id].data.length} ${DEF[id].title.toLowerCase()}`)}
+  if(!res.length){toast("Dosyada tanınan bir liste bulunamadı. Sütun başlıklarını kontrol edin.");return}
+  S.demo=false;S.overrides={};save();render();toast("Yüklendi: "+res.join(", "))}
+function openPaste(id){
+  const d=DEF[id];
+  modal(`Excel'den ${d.title.toLowerCase()} aktar`,`<div class="modal-body"><div class="field full"><label for="pz">Excel'de satırları seçip kopyalayın, buraya yapıştırın</label><textarea id="pz" placeholder="${esc(d.pasteHint)}"></textarea><span class="hint">Sütun sırası: ${esc(d.pasteHint)}. Başlık satırı varsa otomatik atlanır.</span></div><div class="field full hint" id="pzInfo"></div></div>`,
+    `<button class="btn btn-primary" type="button" id="pzGo" disabled>İçe aktar</button><button class="btn" type="button" id="pzC">Vazgeç</button>`);
+  const ta=$("#pz");let parsed=[];
+  ta.oninput=()=>{parsed=[];const lines=ta.value.split(/\r?\n/).filter(l=>l.trim());
+    for(const l of lines){const c=l.split("\t").map(x=>x.trim());if(c.length<2)continue;
+      const o={};d.paste.forEach((k,i)=>{const f=d.fields.find(x=>x.k===k);let v=c[i]??"";
+        if(f&&f.ms)o[k]=v.split(/[,;\s]+/).filter(Boolean);
+        else if(f&&f.type==="date")o[k]=parseDate(v);
+        else if(f&&f.type==="number"){const n=num(v);o[k]=isNaN(n)?"":(f.pct?(String(v).includes("%")||n>1?n/100:n):n)}
+        else if(f&&f.opts)o[k]=normOpt(f,v);
+        else o[k]=v});
+      const numK=d.fields.filter(f=>f.type==="number"&&f.req).map(f=>f.k);
+      if(numK.length&&numK.every(k=>o[k]===""))continue;
+      if(id==="agac"&&!o.cat)o.cat=inferCat(o)||"Diğer";
+      parsed.push(o)}
+    $("#pzInfo").textContent=parsed.length?`${parsed.length} satır okunacak. İlk satır: ${d.paste.map(k=>Array.isArray(parsed[0][k])?parsed[0][k].join(","):parsed[0][k]).join(" · ")}`:"Okunabilir satır bulunamadı. Sütunların sekmeyle ayrıldığından emin olun.";
+    $("#pzGo").disabled=!parsed.length};
+  $("#pzC").onclick=closeModal;
+  $("#pzGo").onclick=()=>{parsed.forEach(o=>d.list().push({id:uid(),...o}));save();closeModal();render();toast(`${parsed.length} kayıt aktarıldı`)};
+}
+
+function vHammadde(R){
+  const rows=R.jobs.slice().sort((a,b)=>a.mat.localeCompare(b.mat)||b.kgMain-a.kgMain);
+  $("#view").innerHTML=`
+  <div class="panel"><div class="panel-head"><h2 class="panel-title">Hammaddeye göre toplam</h2><span class="panel-sub">Parça başı hammadde = parça gramajı + yolluk / göz sayısı</span></div>
+  <div class="tbl-wrap"><table><thead><tr><th>Hammadde</th><th class="r">Ana hammadde (kg)</th><th class="r">Masterbatch (kg)</th><th class="r">Toplam (kg)</th></tr></thead><tbody>
+  ${Object.entries(R.matTot).map(([k,v])=>`<tr><td>${matTag(k)}</td><td class="r num">${nf0.format(v.main)}</td><td class="r num">${nf1.format(v.mb)}</td><td class="r num">${nf0.format(v.main+v.mb)}</td></tr>`).join("")}</tbody></table></div></div>
+  <div class="panel"><div class="panel-head"><h2 class="panel-title">Parça kırılımı</h2></div>
+  <div class="tbl-wrap"><table><thead><tr><th>Parça</th><th>Hammadde</th><th class="r">Adet</th><th class="r">g / adet</th><th class="r">Ana (kg)</th><th class="r">MB (kg)</th><th>Makine</th></tr></thead><tbody>
+  ${rows.map(j=>`<tr><td class="code">${esc(j.part)}</td><td>${matTag(j.mat)}</td><td class="r num">${nf0.format(j.need)}</td><td class="r num">${nf1.format((+j.mold.partG||0)+(+j.mold.runnerG||0)/(+j.mold.cav||1))}</td><td class="r num">${nf0.format(j.kgMain)}</td><td class="r num">${nf1.format(j.kgMb)}</td><td class="code">${esc(j.machine||"–")}</td></tr>`).join("")}</tbody></table></div></div>
+  ${Object.keys(R.buy).length?`<div class="panel"><div class="panel-head"><h2 class="panel-title">Satınalma ihtiyacı</h2><span class="panel-sub">Ürün ağacında Tip = Satınalma olan kalemler</span></div><div class="tbl-wrap"><table><thead><tr><th>Kalem</th><th class="r">Adet</th><th>En erken termin</th><th>Kullanıldığı mamuller</th></tr></thead><tbody>
+  ${Object.entries(R.buy).map(([k,v])=>`<tr><td class="code">${esc(k)}</td><td class="r num">${nf0.format(v.need)}</td><td class="num">${fmtD(v.due)}</td><td>${[...v.products].map(esc).join(", ")}</td></tr>`).join("")}</tbody></table></div></div>`:""}`;
+}
+
+function vAyar(){
+  const st=S.settings;
+  $("#view").innerHTML=`
+  <div class="panel"><div class="panel-head"><h2 class="panel-title">Plan ayarları</h2></div>
+  <form class="panel-body settings-grid" id="setf">
+    <div class="field"><label for="s-h">Plan ufku (iş günü)</label><input id="s-h" name="horizon" inputmode="numeric" value="${esc(st.horizon)}"><span class="hint">Doluluk bu süreye göre hesaplanır</span></div>
+    <div class="field"><label for="s-s">Plan başlangıcı</label><input id="s-s" name="start" type="date" value="${esc(st.start||"")}"><span class="hint">Boş bırakılırsa plan şu andan başlar</span></div>
+    <div class="field"><label for="s-t">Vardiya başlangıç saati</label><input id="s-t" name="shiftStart" type="time" value="${esc(st.shiftStart||"08:00")}"><span class="hint">Günün ilk vardiyasının başladığı saat. Makine, vardiya sayısı × vardiya saati kadar çalışır.</span></div>
+    <div class="field"><label for="s-b">Aynı hammadde tercih payı (gün)</label><input id="s-b" name="bonus" inputmode="decimal" value="${esc(st.bonus)}"><span class="hint">Aynı hammaddeyi çalıştıran makine bu kadar gün daha dolu olsa da tercih edilir. 0 yazarsanız sadece yük dengelenir.</span></div>
+    <div class="field"><label for="s-c">Kalıp değişim süresi (saat)</label><input id="s-c" name="changeover" inputmode="decimal" value="${esc(st.changeover)}"><span class="hint">Aynı makinede iki iş arasına eklenir</span></div>
+    <div class="field"><label for="s-r">Robotlu makineyi koruma payı (gün)</label><input id="s-r" name="robotPay" inputmode="decimal" value="${esc(st.robotPay??1)}"><span class="hint">Robot gerektirmeyen bir parça, robotlu makineye ancak orası bu kadar gün daha boşsa verilir. Robotlu parçalar her zaman robotlu makineye gider.</span></div>
+    <div class="field"><label for="s-mb">Varsayılan boya oranı (%)</label><input id="s-mb" name="mbDefault" inputmode="decimal" value="${esc(Math.round((st.mbDefault==null?0.02:st.mbDefault)*1000)/10)}"><span class="hint">Boya kodu olup oranı girilmemiş kalıplarda kullanılır</span></div>
+    <div class="field"><label for="s-x">Planlamaya alınmayacak kodlar</label><input id="s-x" name="exclude" value="${esc(st.exclude||"")}" placeholder="Örn. KF-"><span class="hint">Bu öneklerle başlayan mamullerin siparişleri plana girmez. Birden fazlaysa virgülle ayırın.</span></div>
+    <div class="field"><label for="s-l">Termin yoksa sipariş tarihine eklenecek gün</label><input id="s-l" name="leadDays" inputmode="numeric" value="${esc(st.leadDays??30)}"><span class="hint">Excel'de termin sütunu yoksa, yükleme sırasında termin sipariş tarihi + bu gün olarak hesaplanır</span></div>
+    <div class="field"><label><input type="checkbox" name="useStock" ${st.useStock!==false?"checked":""} style="width:auto;margin-right:6px">Eldeki mamul stoğunu ihtiyaçtan düş</label></div>
+    <div class="field"><label><input type="checkbox" name="autoBom" ${st.autoBom!==false?"checked":""} style="width:auto;margin-right:6px">Ürün ağacı yoksa alt parçaları koddan bul (KR-388 → KR-388-1, KR-388-2)</label></div>
+    <div class="field"><label><input type="checkbox" name="saturday" ${st.saturday?"checked":""} style="width:auto;margin-right:6px">Cumartesi çalışılıyor</label></div>
+    <div class="field" style="justify-content:end"><button class="btn btn-primary" type="submit" style="align-self:start">Ayarları kaydet</button></div>
+  </form></div>
+  <div class="panel"><div class="panel-head"><h2 class="panel-title">Veri</h2><span class="panel-sub">Kayıtlar yalnızca bu tarayıcıda tutulur · son yedek: ${S.lastBackup?fmtDT(new Date(S.lastBackup)):"hiç alınmadı"} · başka bilgisayarda devam etmek için yedeği orada yükleyin</span></div>
+    <div class="panel-body" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center" id="dataBox">
+      <button class="btn btn-primary" type="button" id="bkSave">Yedek al</button><button class="btn" type="button" id="bkLoad">Yedekten yükle</button><input type="file" id="bkIn" accept=".txt,.json,text/plain,application/json" hidden>
+      <button class="btn" type="button" id="allBtn">Excel şablonundan tümünü yükle</button><input type="file" id="allIn" accept=".xlsx,.xls,.xlsm" hidden>
+      <button class="btn" type="button" id="resetDemo">Örnek veriyi yeniden yükle</button>
+      <button class="btn btn-danger" type="button" id="wipe">Tüm kayıtları temizle</button>
+      <span class="hint" id="dataHint"></span>
+    </div></div>
+  <p class="note">Planlama mantığı: siparişler stok payıyla mamul ihtiyacına, ürün ağacı ile parça ihtiyacına çevrilir. Saatlik üretim 3600 / çevrim × göz sayısıdır. Net saat/gün = vardiya × saat × verim. İşler termin sırasıyla yerleştirilir; her iş uygun makineler arasından en düşük skoru alana verilir: makinedeki yük (gün), aynı hammadde varsa tercih payı kadar düşülür, plan ufku aşılıyorsa ceza eklenir. Robotlu kalıplar yalnızca robotu olan makinelere atanır; robot gerektirmeyen kalıplar robotlu makineyi ancak koruma payından daha büyük bir avantaj varsa kullanır.</p>`;
+  $("#setf").onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target);
+    st.horizon=Math.max(1,Math.round(num(fd.get("horizon"))||22));st.start=fd.get("start")||"";st.shiftStart=fd.get("shiftStart")||"08:00";st.bonus=num(fd.get("bonus"))||0;st.changeover=num(fd.get("changeover"))||0;st.saturday=!!fd.get("saturday");st.robotPay=num(fd.get("robotPay"));if(isNaN(st.robotPay))st.robotPay=1;st.exclude=String(fd.get("exclude")||"").trim();st.leadDays=Math.round(num(fd.get("leadDays")));if(isNaN(st.leadDays))st.leadDays=30;st.useStock=!!fd.get("useStock");st.autoBom=!!fd.get("autoBom");st.mbDefault=num(fd.get("mbDefault"))/100;if(isNaN(st.mbDefault))st.mbDefault=0.02;
+    save();render();toast("Ayarlar kaydedildi")};
+  const confirmBtn=(btn,label,fn)=>{btn.onclick=()=>{$("#dataHint").innerHTML="";const b=document.createElement("button");b.className="btn btn-danger";b.type="button";b.textContent=label;b.onclick=fn;$("#dataHint").append("Emin misiniz? ",b)}};
+  $("#allBtn").onclick=()=>$("#allIn").click();
+  $("#allIn").onchange=e=>{const f=e.target.files[0];if(f)readWb(f,importAll)};
+  $("#bkSave").onclick=async()=>{const now=new Date(),pad=n=>String(n).padStart(2,"0");
+    const name=`PlanPres_yedek_${iso(now)}_${pad(now.getHours())}${pad(now.getMinutes())}.txt`;
+    const txt=JSON.stringify({app:"PlanPres",version:1,savedAt:now.toISOString(),data:{...S,lastBackup:now.toISOString()}});
+    let dl=null;try{dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null}catch(e){}
+    const fallback=()=>{modal("Yedek dosyası",`<div class="modal-body"><div class="field full"><textarea id="bkTxt" readonly>${esc(txt)}</textarea><span class="hint">Bu görünümde dosya indirilemedi. Metni kopyalayıp bir metin dosyasına yapıştırın ve ${esc(name)} adıyla kaydedin.</span></div></div>`,`<button class="btn" type="button" id="bkC">Kapat</button>`);$("#bkC").onclick=closeModal;const t=$("#bkTxt");t.focus();t.select()};
+    if(!dl){fallback();return}
+    try{await dl.save({filename:name,data:txt});S.lastBackup=now.toISOString();save();render();toast("Yedek kaydedildi")}
+    catch(e){const c=e&&e.code;if(c==="declined")toast("Yedek kaydedilmedi");else if(c==="rate_limited")toast("Önceki kaydetme penceresi hâlâ açık");else fallback()}};
+  $("#bkLoad").onclick=()=>$("#bkIn").click();
+  $("#bkIn").onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+    rd.onload=()=>{let o;try{o=JSON.parse(rd.result)}catch(_){toast("Dosya okunamadı: geçerli bir PlanPres yedeği değil");return}
+      const d=o&&o.data;if(!d||!Array.isArray(d.machines)||!Array.isArray(d.molds)||!Array.isArray(d.orders)){toast("Bu dosya bir PlanPres yedeği değil");return}
+      const when=o.savedAt?fmtDT(new Date(o.savedAt)):"tarihsiz";$("#dataHint").innerHTML="";
+      const b=document.createElement("button");b.className="btn btn-danger";b.type="button";b.textContent="Evet, yedeği yükle";
+      b.onclick=()=>{S=Object.assign({settings:{},machines:[],molds:[],bom:[],orders:[],overrides:{}},d);save();render();toast(`Yedek yüklendi (${when})`)};
+      $("#dataHint").append(`${when} tarihli yedek: ${d.orders.length} sipariş, ${d.molds.length} kalıp, ${d.machines.length} makine. Mevcut veriler silinip bunlar yüklensin mi? `,b)};
+    rd.onerror=()=>toast("Dosya okunamadı");rd.readAsText(f);e.target.value=""};
+  confirmBtn($("#resetDemo"),"Evet, örnek veriyi yükle",()=>{S=demo();save();render();toast("Örnek veri yüklendi")});
+  confirmBtn($("#wipe"),"Evet, temizle",()=>{S={demo:false,settings:S.settings,machines:[],molds:[],bom:[],orders:[],overrides:{}};save();render();toast("Kayıtlar temizlendi")});
+}
+
+render();
+})();
+</script>
