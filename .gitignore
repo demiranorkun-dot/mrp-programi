@@ -1,3 +1,40 @@
+# --- Bağımlılık ve sistem dosyaları ---
 node_modules/
+.DS_Store
+Thumbs.db
+*.log
+
+# --- Gizli bilgiler: asla depoya girmez ---
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials*.json
+service-account*.json
+
+# --- Gerçek firma / müşteri verisi: asla depoya girmez ---
+# Mikro çıktıları, reçeteler, sipariş listeleri
+*.xls
+*.xlsx
+*.xlsm
+*.csv
+# PlanPres yedekleri (sipariş, müşteri, reçete içerir)
+PlanPres_yedek_*
+*.planpres.json
+# Gerçek veriyle çalışan testlerin veri klasörü (PLANPRES_DATA)
 data/
+# Veritabanı ve yedek dosyaları
+*.sql
+*.sql.gz
+*.dump
+*.bak
+*.db
+*.sqlite
+*.sqlite3
+# Gerçek veriyle alınmış ekran görüntüleri ve geçici dosyalar
+screenshots/
+tmp/
 *.local.json
