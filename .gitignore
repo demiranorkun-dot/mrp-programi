@@ -1,5 +1,10 @@
 # --- Bağımlılık ve sistem dosyaları ---
 node_modules/
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
 .DS_Store
 Thumbs.db
 *.log
