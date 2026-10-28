@@ -29,8 +29,11 @@ satır bazlı güvenlik) ve ön yüz için Vercel / Cloudflare Pages. Fazlar sı
 Tahmini süre: Faz 0–3 yaklaşık 6–8 hafta (akşam ve hafta sonu çalışmasıyla).
 
 ### Faz 0 — Hazırlık
-- ⬜ `index.html` tek dosya (~160 KB): modüllere bölme (motor, MRP, ekranlar, Dash, Chart, DEF/SYN) ve
-  Vite ile derleme adımı. Testler ve regresyon karşılaştırması her adımda yeşil kalmalı.
+- ✅ `index.html` tek dosya (~160 KB): `src/` altında 2 CSS + 12 JS parçasına bölündü; `scripts/build.js`
+  (bağımlılıksız) parçaları birleştirip `index.html`'i üretiyor. İlk derleme çıktısı eski dosyayla bayt bayt aynı.
+  Vite yerine bağımlılıksız betik seçildi: parçalar tek IIFE'yi paylaştığı için ES modüllerine geçiş ayrı bir iş.
+- ⬜ JS parçalarının ES modüllerine dönüştürülmesi (ortak `S` durumu ve yardımcıların açık `import`/`export` ile
+  paylaşılması) ve gerekiyorsa Vite. Faz 1'deki depolama adaptörüyle birlikte yapılması önerilir.
 - ⬜ SheetJS 0.18.5 güncellemesi (bilinen açıklar). Yeni sürümler npm/cdnjs'te değil, SheetJS'in kendi
   dağıtımında (cdn.sheetjs.com); derleme adımıyla pakete gömülmesi araştırılmalı.
 - ⬜ Artifact çalışma zamanına bağımlılığın (`window.claude.use("downloads")`) kaldırılması; yedek indirme
