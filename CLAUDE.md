@@ -34,7 +34,7 @@ Kullanıcı: üretim planlama yöneticisi; uygulama ileride başka firmalara sat
 | `css/02-yonetim-paneli.css` | Yönetim paneli stilleri |
 | `govde.html` | Sayfa iskeleti, SheetJS `<script>` etiketi |
 | `js/00-baslangic.js` | IIFE açılışı, yardımcılar (`nf0`, `iso`, `num`…), `demo()` / `load()` / `save()` |
-| `js/01-planlama-motoru.js` | `compute()`: sipariş → reçete patlatma → parça işleri → makine önerisi → saat bazlı çizelge (kalıp çakışması, çalışan iş, araya iş) |
+| `js/01-planlama-motoru.js` | `compute()`: sipariş → reçete patlatma → parça işleri → makine önerisi → saat bazlı çizelge (kalıp çakışması, çalışan iş, araya iş). Patlatma seviye seviye yapılır: "Yarı mamul" tipli malzeme kartlarının stoğu (emniyet stoğu hariç) termini erken ihtiyaca önce düşülür (`R.semiUsed`); döngülü reçeteler patlatılmaz, `R.bomCycles`'ta raporlanır. Kart yokken sonuç eski derinlik öncelikli patlatmayla birebir aynıdır (`tests/mrp.test.js` bölüm 8) |
 | `js/02-mrp.js` | `mrp()`: çizelgeye göre zamanlanmış malzeme ihtiyacı, stok bakiyesi, sipariş önerisi |
 | `js/03-ortak-gorunum.js` | Malzeme renkleri, etiket/rozet yardımcıları |
 | `js/04-gezinme.js` | Menü ve sayfa geçişleri |

@@ -7,10 +7,22 @@ Bir seferde tek görev. Her görev ayrı dalda, testlerle birlikte. Durum: ⬜ a
   açık satınalma siparişi modellenemiyor. MRP önerisinden sipariş açma, beklenen geliş tarihli birden çok sipariş,
   teslim alma, Mikro açık satınalma listesini Excel ile yükleme. (Önerilen sıradaki görev)
 - ⬜ Satınalma önerisinde parti büyüklüğü (koli/palet katı) yuvarlaması.
+- ⬜ Geç gelen yoldaki miktar: stok yoldaki gelmeden bitiyorsa bugün yalnızca "Yoldaki geç geliyor" uyarısı var;
+  öne çekme ya da ara sipariş önerisi yok (net ihtiyaç 0 görünüyor).
+- ⬜ Tedarik süresi takvim günüyle hesaplanıyor; iş günü / tatil takvimi yok.
+- ⬜ Birim dönüşüm tablosu: bugün yalnızca gr → kg. Kg ↔ adet, koli içi adet gibi dönüşümler yok.
 
 ## Stok yönetimi
+- ✅ **Yarı mamul stoğunun reçete patlatmada düşülmesi** ve reçete döngü kontrolü. "Yarı mamul" tipli malzeme
+  kartının stoğu (emniyet stoğu hariç) termini erken ihtiyaca önce düşülür, kalan net miktar planlanır ve alt seviyeye
+  patlatılır. Döngülü reçeteler plana alınmaz, Özet ve Yönetim paneli → Veri eksikleri'nde raporlanır. Eski 6 seviye
+  sınırı kaldırıldı. Testler: `tests/mrp.test.js`.
+- ⬜ Yarı mamulde emniyet stoğunun altına düşülmüşse yerine koyma ihtiyacı (bugün emniyet stoğu yalnızca korunuyor,
+  eksiği için iş açılmıyor).
+- ⬜ Rezervasyon / tahsis: stok siparişlere bağlanmıyor; kullanılabilir miktar sipariş bazında görünmüyor.
 - ⬜ Hammadde stoklarının Mikro stok listesinden düzenli güncellenmesi için eşleştirme ayarının kaydedilmesi.
 - ⬜ Mamul stok hareketleri: üretim girişi ile planlanan ihtiyaç arasındaki ilişki (çift sayım riski analiz edilmeli).
+  Mikro sipariş listesi kalan miktarı veriyorsa üretim girişi plandan düşülmemeli; bu kurala göre karar verilmeli.
 
 ## Üretim planlama
 - ⬜ Makine bakım / arıza duruşlarının takvime kapalı zaman olarak girilmesi.

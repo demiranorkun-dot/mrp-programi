@@ -401,15 +401,55 @@ function compute(){
     if(o.stock!==""&&o.stock!=null)P.stock=Math.max(P.stock,+o.stock||0);
     if(o.due&&(!P.due||o.due<P.due))P.due=o.due}
   for(const P of Object.values(prod))P.qty=st.useStock===false?P.gross:Math.max(0,P.gross-P.stock);
-  // multi-level recipe explosion: semi-finished parts go to molding (or further down), everything else is bought
-  const parts={},buy={},bomBy={};S.bom.forEach(b=>{(bomBy[b.product]=bomBy[b.product]||[]).push(b)});
+  // multi-level recipe explosion: semi-finished parts go to molding (or further down), everything else is bought.
+  // Level by level (an item is netted only after all its parents): stock on "Yarı mamul" material cards (stock − safety)
+  // is consumed by the earliest due demand first, and only the remaining net quantity is planned and exploded further.
+  // Recipes containing a cycle are reported in bomCycles and not exploded.
+  const bomBy={};S.bom.forEach(b=>{(bomBy[b.product]=bomBy[b.product]||[]).push(b)});
   const molded=new Set(S.molds.map(k=>k.part));
+  const partsL={},buyL={};
   const put=(tgt,b,n,due,root)=>{const e=tgt[b.part]=tgt[b.part]||{need:0,due:null,products:new Set(),byProd:{},cat:catOf(b),unit:b.unit||defUnit(b),name:b.name||""};
     e.need+=n;e.products.add(root);e.byProd[root]=(e.byProd[root]||0)+n;if(due&&(!e.due||due<e.due))e.due=due};
-  const explode=(pc,qty,due,root,depth)=>{for(const b of bomBy[pc]||[]){const n=qty*(+b.qty||0)*(1+(+b.scrap||0));if(!(n>0))continue;
-    if(isProd(b)){if(molded.has(b.part)||!bomBy[b.part])put(parts,b,n,due,root);if(bomBy[b.part]&&depth<6)explode(b.part,n,due,root,depth+1)}
-    else put(buy,b,n,due,root)}};
-  for(const [pc,p] of Object.entries(prod)){if(p.qty&&bomBy[pc])explode(pc,p.qty,p.due,pc,0)}
+  const deeper=b=>isProd(b)&&!!bomBy[b.part];
+  // cycle check over the lines that are exploded (semi-finished with their own recipe)
+  const vis={},cycOf={},bomCycles=[];
+  const dfs=(item,stack)=>{if(vis[item]===2)return null;if(vis[item]===3)return cycOf[item];if(vis[item]===1)return[...stack.slice(stack.indexOf(item)),item];
+    vis[item]=1;stack.push(item);let c=null;for(const b of bomBy[item])if(deeper(b)&&(c=dfs(b.part,stack)))break;
+    stack.pop();if(c){vis[item]=3;cycOf[item]=c}else vis[item]=2;return c};
+  const roots=[];
+  for(const [pc,p] of Object.entries(prod)){if(!(p.qty&&bomBy[pc]))continue;const c=dfs(pc,[]);if(c)bomCycles.push({product:pc,path:c});else roots.push(pc)}
+  // processing order: topological over parent → child lines of exploded items
+  const expl=new Set(roots),q=[...roots];
+  while(q.length){const it=q.shift();for(const b of bomBy[it])if(deeper(b)&&!expl.has(b.part)){expl.add(b.part);q.push(b.part)}}
+  const indeg={};expl.forEach(it=>{for(const b of bomBy[it])indeg[b.part]=(indeg[b.part]||0)+1});
+  const topo=[],ready=roots.filter(r=>!indeg[r]);
+  while(ready.length){const it=ready.shift();topo.push(it);if(expl.has(it))for(const b of bomBy[it])if(--indeg[b.part]===0)ready.push(b.part)}
+  const semiCard={};(S.materials||[]).forEach(c=>{const k=String(c.code||"").trim();if(k&&c.mtype==="Yarı mamul")semiCard[k]=c});
+  const semiUsed=[];
+  const netItem=(code,P)=>{const c=semiCard[code];const own=P.map((x,i)=>i).filter(i=>P[i].prod&&!P[i].top);if(!c||!own.length)return P;
+    const avail0=Math.max(0,(+c.stock||0)-(+c.safety||0));let avail=avail0;const out=P.map(x=>({...x}));
+    own.sort((a,b)=>(P[a].due||"9").localeCompare(P[b].due||"9")||a-b);
+    for(const i of own){if(!(avail>0))break;const u=Math.min(avail,out[i].q);out[i].q-=u;avail-=u}
+    const gross=own.reduce((a,i)=>a+P[i].q,0),used=avail0-avail;
+    semiUsed.push({code,name:c.name||"",stock:+c.stock||0,safety:+c.safety||0,gross,used,net:gross-used});
+    return out.filter(x=>x.q>1e-9)};
+  const inbox={};const send=(code,x)=>{(inbox[code]=inbox[code]||[]).push(x)};
+  roots.forEach(pc=>send(pc,{q:prod[pc].qty,due:prod[pc].due,root:pc,top:true,prod:true,b:null}));
+  for(const it of topo){if(!inbox[it])continue;
+    for(const x of netItem(it,inbox[it])){
+      if(x.b){if(!x.prod){put(buyL,x.b,x.q,x.due,x.root);continue}if(molded.has(it)||!bomBy[it])put(partsL,x.b,x.q,x.due,x.root)}
+      if(expl.has(it))for(const b of bomBy[it]){const n=x.q*(+b.qty||0)*(1+(+b.scrap||0));if(n>0)send(b.part,{q:n,due:x.due,root:x.root,prod:isProd(b),b})}}}
+  // keep the order the earlier depth-first explosion produced (job ordering, machine choice and display depend on it)
+  // (including which recipe line supplies an item's group, unit and name when lines disagree)
+  const oP=[],oB=[],fP={},fB={},walked=new Set();const first=(o,f,b)=>{if(!f[b.part]){f[b.part]=b;o.push(b.part)}};
+  const walk=pc=>{if(walked.has(pc))return;walked.add(pc);for(const b of bomBy[pc]){if(!((+b.qty||0)*(1+(+b.scrap||0))>0))continue;
+    if(isProd(b)){if(molded.has(b.part)||!bomBy[b.part])first(oP,fP,b);if(bomBy[b.part])walk(b.part)}else first(oB,fB,b)}};
+  roots.forEach(walk);
+  const rIdx={};Object.keys(prod).forEach((k,i)=>rIdx[k]=i);const byRoot=(a,b)=>rIdx[a]-rIdx[b];
+  const reorder=(src,ord,f)=>{const r={};for(const k of[...ord,...Object.keys(src)])if(src[k]&&!r[k]){const e=src[k],b=f[k];
+    if(b){e.cat=catOf(b);e.unit=b.unit||defUnit(b);e.name=b.name||""}
+    e.products=new Set([...e.products].sort(byRoot));const bp={};Object.keys(e.byProd).sort(byRoot).forEach(k2=>bp[k2]=e.byProd[k2]);e.byProd=bp;r[k]=e}return r};
+  const parts=reorder(partsL,oP,fP),buy=reorder(buyL,oB,fB);
   const bomProducts=new Set(S.bom.map(b=>b.product));const unmatched=[];let autoLinked=0;
   const addPart=(pc,part,n,due)=>{if(!parts[part])parts[part]={need:0,due:null,products:new Set()};parts[part].need+=n;parts[part].products.add(pc);if(due&&(!parts[part].due||due<parts[part].due))parts[part].due=due};
   for(const [pc,p] of Object.entries(prod)){if(bomProducts.has(pc)||!p.qty)continue;
@@ -510,7 +550,7 @@ function compute(){
   for(const m of S.machines)for(const s of lanes[m.code]){if(!s.L||s.startA==null){s.end=null;s.startDT=null;s.endIso="";continue}
     s.startDT=dtAt(s.startA,s.L);s.end=dtAt(s.endA,s.L,true);s.endIso=iso(s.end);if(!s.job.startDT||s.startDT<s.job.startDT)s.job.startDT=s.startDT}
   const matTot={};jobs.forEach(j=>{if(!matTot[j.mat])matTot[j.mat]={main:0,mb:0,parts:0};matTot[j.mat].main+=j.kgMain;matTot[j.mat].mb+=j.kgMb;matTot[j.mat].parts++});
-  const out={jobs,lanes,days,span,start,buy,missing,matTot,prod,unmatched,autoLinked,waits};out.mrp=mrp(out);return out;
+  const out={jobs,lanes,days,span,start,buy,missing,matTot,prod,unmatched,autoLinked,waits,bomCycles,semiUsed};out.mrp=mrp(out);return out;
 }
 
 /* ---------- MRP: time-phased material requirements from the schedule ---------- */
@@ -653,6 +693,8 @@ function vOzet(R){
       :`<div class="empty">Uyarı yok. Tüm parçalar uygun makinede ve termine yetişiyor.</div>`}
       ${R.missing.length?`<div class="panel-body err">Kalıbı tanımlı olmayan parçalar: ${R.missing.map(esc).join(", ")}</div>`:""}
       ${R.unmatched.length?`<div class="panel-body err">Ürün ağacı ve kalıbı bulunamayan mamuller (${R.unmatched.length}): ${R.unmatched.slice(0,40).map(esc).join(", ")}${R.unmatched.length>40?" …":""}</div>`:""}
+      ${R.bomCycles.length?`<div class="panel-body err">Ürün ağacında döngü olan mamuller plana alınmadı (${R.bomCycles.length}): ${R.bomCycles.slice(0,12).map(c=>`${esc(c.product)} (${c.path.map(esc).join(" › ")})`).join(", ")}${R.bomCycles.length>12?" …":""}. Ürün ağacı ekranından döngüyü düzeltin.</div>`:""}
+      ${R.semiUsed.some(u=>u.used>0)?`<div class="panel-body hint">Yarı mamul stoğundan karşılanan: ${R.semiUsed.filter(u=>u.used>0).slice(0,12).map(u=>`<span class="code">${esc(u.code)}</span> ${nf0.format(u.used)} / ${nf0.format(u.gross)} adet`).join(", ")}${R.semiUsed.filter(u=>u.used>0).length>12?" …":""} · emniyet stoğu düşülmez, kalan ihtiyaç plana alınır.</div>`:""}
       ${R.waits.length?`<div class="panel-body hint">Kalıp çakışması nedeniyle ertelenen işler (${R.waits.length}): ${R.waits.slice(0,12).map(s=>`${esc(s.part)} (${esc(s.mold.code)} kalıbı ${esc(s.waitBy)}'de, ${nf1.format(s.wait)} sa)`).join(", ")}${R.waits.length>12?" …":""}</div>`:""}
     </div>
   </section>
@@ -915,6 +957,7 @@ const Dash={
     add(!nm?"bad":noW===nm?"bad":noW?"warn":"ok","Parça gramajı",noW?`${noW} kalıpta parça gramajı yok. Bu parçaların hammadde ihtiyacı ve maliyeti hesaplanamıyor.`:"Tüm kalıplarda gramaj var.",nm-noW,nm,"kaliplar");
     const needP=Object.values(R.prod).filter(p=>p.qty>0).length;
     add(R.unmatched.length?"warn":"ok","Mamul reçetesi",R.unmatched.length?`İhtiyacı olan ${R.unmatched.length} mamul kalıba bağlanamıyor; plana, MRP'ye ve maliyete girmiyor.`:"İhtiyacı olan tüm mamuller kalıba bağlı.",needP-R.unmatched.length,needP,"agac");
+    if((R.bomCycles||[]).length)add("bad","Ürün ağacında döngü",`${R.bomCycles.length} mamulün reçetesi kendine geri dönüyor (${R.bomCycles.slice(0,5).map(c=>c.path.join(" › ")).join("; ")}). Bu mamuller plana ve MRP'ye girmiyor.`,null,null,"agac");
     const rows=R.mrp.rows,noCard=rows.filter(r=>!r.hasCard).length;
     if(rows.length)add(noCard?"warn":"ok","Malzeme stok kartları",noCard?`MRP'de geçen ${noCard} malzemenin stok kartı yok; stokları 0 sayılıyor.`:"MRP'deki tüm malzemelerin stok kartı var.",rows.length-noCard,rows.length,"malzemeler");
     const mats={};(S.materials||[]).forEach(m=>mats[String(m.code).trim()]=m);const codes=[...new Set([...rows.map(r=>r.code),...S.molds.map(k=>String(k.mat||"").trim()).filter(Boolean)])];
