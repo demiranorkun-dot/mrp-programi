@@ -108,6 +108,7 @@ const Dash={
     add(!nm?"bad":noW===nm?"bad":noW?"warn":"ok","Parça gramajı",noW?`${noW} kalıpta parça gramajı yok. Bu parçaların hammadde ihtiyacı ve maliyeti hesaplanamıyor.`:"Tüm kalıplarda gramaj var.",nm-noW,nm,"kaliplar");
     const needP=Object.values(R.prod).filter(p=>p.qty>0).length;
     add(R.unmatched.length?"warn":"ok","Mamul reçetesi",R.unmatched.length?`İhtiyacı olan ${R.unmatched.length} mamul kalıba bağlanamıyor; plana, MRP'ye ve maliyete girmiyor.`:"İhtiyacı olan tüm mamuller kalıba bağlı.",needP-R.unmatched.length,needP,"agac");
+    if((R.bomCycles||[]).length)add("bad","Ürün ağacında döngü",`${R.bomCycles.length} mamulün reçetesi kendine geri dönüyor (${R.bomCycles.slice(0,5).map(c=>c.path.join(" › ")).join("; ")}). Bu mamuller plana ve MRP'ye girmiyor.`,null,null,"agac");
     const rows=R.mrp.rows,noCard=rows.filter(r=>!r.hasCard).length;
     if(rows.length)add(noCard?"warn":"ok","Malzeme stok kartları",noCard?`MRP'de geçen ${noCard} malzemenin stok kartı yok; stokları 0 sayılıyor.`:"MRP'deki tüm malzemelerin stok kartı var.",rows.length-noCard,rows.length,"malzemeler");
     const mats={};(S.materials||[]).forEach(m=>mats[String(m.code).trim()]=m);const codes=[...new Set([...rows.map(r=>r.code),...S.molds.map(k=>String(k.mat||"").trim()).filter(Boolean)])];

@@ -34,6 +34,8 @@ function vOzet(R){
       :`<div class="empty">Uyarı yok. Tüm parçalar uygun makinede ve termine yetişiyor.</div>`}
       ${R.missing.length?`<div class="panel-body err">Kalıbı tanımlı olmayan parçalar: ${R.missing.map(esc).join(", ")}</div>`:""}
       ${R.unmatched.length?`<div class="panel-body err">Ürün ağacı ve kalıbı bulunamayan mamuller (${R.unmatched.length}): ${R.unmatched.slice(0,40).map(esc).join(", ")}${R.unmatched.length>40?" …":""}</div>`:""}
+      ${R.bomCycles.length?`<div class="panel-body err">Ürün ağacında döngü olan mamuller plana alınmadı (${R.bomCycles.length}): ${R.bomCycles.slice(0,12).map(c=>`${esc(c.product)} (${c.path.map(esc).join(" › ")})`).join(", ")}${R.bomCycles.length>12?" …":""}. Ürün ağacı ekranından döngüyü düzeltin.</div>`:""}
+      ${R.semiUsed.some(u=>u.used>0)?`<div class="panel-body hint">Yarı mamul stoğundan karşılanan: ${R.semiUsed.filter(u=>u.used>0).slice(0,12).map(u=>`<span class="code">${esc(u.code)}</span> ${nf0.format(u.used)} / ${nf0.format(u.gross)} adet`).join(", ")}${R.semiUsed.filter(u=>u.used>0).length>12?" …":""} · emniyet stoğu düşülmez, kalan ihtiyaç plana alınır.</div>`:""}
       ${R.waits.length?`<div class="panel-body hint">Kalıp çakışması nedeniyle ertelenen işler (${R.waits.length}): ${R.waits.slice(0,12).map(s=>`${esc(s.part)} (${esc(s.mold.code)} kalıbı ${esc(s.waitBy)}'de, ${nf1.format(s.wait)} sa)`).join(", ")}${R.waits.length>12?" …":""}</div>`:""}
     </div>
   </section>
