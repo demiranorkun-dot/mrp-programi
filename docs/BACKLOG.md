@@ -25,3 +25,11 @@ Bir seferde tek görev. Her görev ayrı dalda, testlerle birlikte. Durum: ⬜ a
 - ⬜ `index.html` tek dosya (~160 KB): ürünleştirme öncesi modüllere bölme ve derleme adımı.
 - ⬜ SheetJS 0.18.5 güncellemesi (bilinen açıklar; cdnjs'te daha yeni sürüm yok — çözüm araştırılmalı).
 - ⬜ Çok kullanıcılı sürüm: sunucu, kullanıcı girişi, firma ayrımı.
+
+## Sonraki planlar (şimdi yapılmayacak — önce enjeksiyon ürünü satışa hazır olacak)
+- ⬜ **ERP entegrasyonu (öncelikli):** ortak veri modeli + ERP başına kayıtlı Excel şablonları (Mikro, Logo Tiger, Netsis ile başla);
+  sunucu sürümüyle birlikte Mikro / Logo veritabanından salt okunur bağlantı programı.
+- ⬜ **Montaj modülü (ileride):** enjeksiyon → montaj → paketleme → sevkiyat tek plan. Kaynak = hat / istasyon / işçi,
+  adet başına standart montaj süresi, yetkinlik matrisi, vardiya bazlı kişi kapasitesi. Sonra fason montaj firmalarına ayrı paket
+  (müşteri malı parça takibi, müşteri bazında işçilik).
+  Hazırlık: "makine" kavramını genel "kaynak" kavramına genişletmek (veri modelini bozmadan).
