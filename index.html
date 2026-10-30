@@ -55,7 +55,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .nav button:focus-visible{outline:2px solid var(--amber)}
 .nav svg{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
 .nav .count{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--side-muted)}
-.side-foot{margin-top:auto;padding:0 18px;font-size:12px;color:var(--side-muted)}.ord{font-size:11px;color:var(--muted);font-family:inherit;white-space:nowrap}
+.side-foot{margin-top:auto;padding:0 18px;font-size:12px;color:var(--side-muted)}.acil{color:var(--bad);font-weight:700;letter-spacing:.03em}.ord{font-size:11px;color:var(--muted);font-family:inherit;white-space:nowrap}
 
 .main{min-width:0;display:flex;flex-direction:column}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line);padding-block:12px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:12px;flex-wrap:wrap}
@@ -430,12 +430,14 @@ function compute(){
   // uzak terminliler ayrı iş olur. batchDays=0 ya da aile kalıbı: eski davranış (parçanın tüm ihtiyacı tek iş).
   const batchDays=st.batchDays==null||st.batchDays===""?7:+st.batchDays,famSet=S.family||{};
   const dayDiff=(a,b)=>(parseISO(b)-parseISO(a))/864e5;
+  // öncelik: 1 = acil, 2 = normal (boş), 3 = düşük; sıralamada önce öncelik, sonra termin
+  const usePrio=st.usePrio!==false,pr=v=>{const n=Math.round(+v);return n>=1&&n<=9?n:2},minPr=L=>L.length?Math.min(...L.map(l=>pr(l.prio))):2;
   const groupLots=(v,mold)=>{const L=(v.lots||[]).slice();
-    if(!(batchDays>0)||famSet[String(mold.code)]||L.length<2)return[{need:v.need,due:v.due,products:[...v.products],orders:[...new Set(L.map(l=>l.no).filter(Boolean))]}];
+    if(!(batchDays>0)||famSet[String(mold.code)]||L.length<2)return[{need:v.need,due:v.due,products:[...v.products],orders:[...new Set(L.map(l=>l.no).filter(Boolean))],prio:minPr(L)}];
     L.sort((a,b)=>(a.due||"9").localeCompare(b.due||"9"));const gs=[];let g=null;
-    for(const l of L){if(!g||(g.due&&!l.due)||(g.due&&l.due&&dayDiff(g.due,l.due)>batchDays)||(!g.due&&l.due)){g={need:0,due:l.due||null,products:new Set(),orders:new Set()};gs.push(g)}
-      g.need+=l.n;g.products.add(l.root);if(l.no)g.orders.add(l.no)}
-    return gs.map(x=>({need:x.need,due:x.due,products:[...x.products],orders:[...x.orders]}))};
+    for(const l of L){if(!g||(g.due&&!l.due)||(g.due&&l.due&&dayDiff(g.due,l.due)>batchDays)||(!g.due&&l.due)){g={need:0,due:l.due||null,products:new Set(),orders:new Set(),prio:9};gs.push(g)}
+      g.need+=l.n;g.products.add(l.root);if(l.no)g.orders.add(l.no);g.prio=Math.min(g.prio,pr(l.prio))}
+    return gs.map(x=>({need:x.need,due:x.due,products:[...x.products],orders:[...x.orders],prio:x.prio}))};
   for(const [part,v] of Object.entries(parts)){
     const mold=S.molds.find(k=>k.part===part);
     if(!mold){missing.push(part);continue}
@@ -443,7 +445,7 @@ function compute(){
     const gPer=(+mold.partG||0)+(+mold.runnerG||0)/(+mold.cav||1);
     groupLots(v,mold).forEach((g,gi)=>{
       const hrs=rate?g.need/rate:0,kg=g.need*gPer/1000;
-      jobs.push({part,key:gi?part+"@"+(g.due||"termsiz"):part,batch:gi,mold,need:g.need,due:g.due,products:g.products,orders:g.orders,rate,hrs,mat:mold.mat,kgMain:kg*(1-mbr(mold)),kgMb:kg*mbr(mold),needR:mold.mode==="Robotlu",listed:(mold.machines||[]).filter(c=>mByCode[c])});
+      jobs.push({part,key:gi?part+"@"+(g.due||"termsiz"):part,batch:gi,mold,need:g.need,due:g.due,products:g.products,orders:g.orders,prio:g.prio,rate,hrs,mat:mold.mat,kgMain:kg*(1-mbr(mold)),kgMb:kg*mbr(mold),needR:mold.mode==="Robotlu",listed:(mold.machines||[]).filter(c=>mByCode[c])});
       const jj=jobs[jobs.length-1];jj.compat=jj.listed.filter(c=>!jj.needR||hasRobot(mByCode[c]))});
   }
   // family molds: parts from one mold are pressed together as one job
@@ -452,9 +454,10 @@ function compute(){
     let inter=f.compat.filter(x=>g.every(j=>j.compat.includes(x)));if(!inter.length)inter=[...new Set(g.flatMap(j=>j.compat))];
     const mj={...f,part:g.map(j=>j.part).join(" + "),key:"FAM:"+c,family:true,members:g.map(j=>({part:j.part,need:j.need,rate:j.rate})),
       need:Math.max(...g.map(j=>j.need)),hrs:Math.max(...g.map(j=>j.hrs)),kgMain:g.reduce((a,j)=>a+j.kgMain,0),kgMb:g.reduce((a,j)=>a+j.kgMb,0),
-      due:g.map(j=>j.due).filter(Boolean).sort()[0]||null,products:[...new Set(g.flatMap(j=>j.products))],needR:g.some(j=>j.needR),compat:inter,listed:[...new Set(g.flatMap(j=>j.listed))]};
+      due:g.map(j=>j.due).filter(Boolean).sort()[0]||null,products:[...new Set(g.flatMap(j=>j.products))],orders:[...new Set(g.flatMap(j=>j.orders||[]))],prio:Math.min(...g.map(j=>j.prio||2)),needR:g.some(j=>j.needR),compat:inter,listed:[...new Set(g.flatMap(j=>j.listed))]};
     for(const j of g)jobs.splice(jobs.indexOf(j),1);jobs.push(mj)}
-  jobs.sort((a,b)=>(a.due||"9").localeCompare(b.due||"9")||b.hrs-a.hrs);
+  const pk=j=>usePrio?(j.prio||2):2;
+  jobs.sort((a,b)=>pk(a)-pk(b)||(a.due||"9").localeCompare(b.due||"9")||b.hrs-a.hrs);
   const load={},mats={};S.machines.forEach(m=>{load[m.code]=0;mats[m.code]=new Set()});
   const co=+st.changeover||0, H=+st.horizon||22, bonus=+st.bonus||0, robotPay=st.robotPay==null?1:(+st.robotPay||0);
   // jobs already running on a machine: locked first on that machine
@@ -494,7 +497,7 @@ function compute(){
   const maxDays=[];
   for(const m of S.machines){const lane=lanes[m.code];const ord=seq[m.code]||[];
     const pos=s=>{if(s.running&&s.segNo!==2)return -1;const i=ord.indexOf(s.sid);return i<0?1e6:i};
-    lane.sort((a,b)=>pos(a)-pos(b)||(a.due||"9").localeCompare(b.due||"9")||a.segNo-b.segNo)}
+    lane.sort((a,b)=>pos(a)-pos(b)||pk(a)-pk(b)||(a.due||"9").localeCompare(b.due||"9")||a.segNo-b.segNo)}
   // schedule all machines in time order so one mold is never on two machines at once
   // time base: 1 unit = one working day of a machine (shifts × hours, starting at shift start); production runs at efficiency
   const shiftH=(()=>{const [a,b]=String(st.shiftStart||"08:00").split(":").map(Number);return (a||0)+(b||0)/60})();
@@ -686,7 +689,7 @@ function vPlan(R){
   $("#view").innerHTML=`
   <div class="panel"><div class="panel-head"><div><h2 class="panel-title">Parça bazlı plan</h2><div class="panel-sub">Öneri motoru uygun makineler içinde önce aynı hammaddeyi çalıştıranı, sonra en az yüklüsünü seçer. Beğenmediğiniz satırda makineyi elle değiştirin.</div></div></div>
   <div class="tbl-wrap"><table><thead><tr><th>Parça</th><th>Kalıp</th><th>Hammadde</th><th>Çalışma</th><th class="r">İhtiyaç</th><th class="r">Saat</th><th>Termin</th><th>Öneri</th><th>Makine</th><th>Başlangıç</th><th>Bitiş</th><th>Durum</th></tr></thead><tbody>
-  ${R.jobs.map(j=>`<tr><td class="code">${esc(j.part)}${j.orders&&j.orders.length?`<div class="ord" title="Sipariş no">${esc(j.orders.slice(0,3).join(", "))}${j.orders.length>3?` +${j.orders.length-3}`:""}</div>`:""}</td><td class="code">${esc(j.mold.code)}</td><td>${matTag(j.mat)}</td><td>${modeTag(j.mold.mode)}</td>
+  ${R.jobs.map(j=>`<tr><td class="code">${esc(j.part)}${j.orders&&j.orders.length?`<div class="ord" title="Sipariş no">${j.prio===1&&S.settings.usePrio!==false?`<b class="acil">ACİL</b> `:""}${esc(j.orders.slice(0,3).join(", "))}${j.orders.length>3?` +${j.orders.length-3}`:""}</div>`:""}</td><td class="code">${esc(j.mold.code)}</td><td>${matTag(j.mat)}</td><td>${modeTag(j.mold.mode)}</td>
     <td class="r num">${needTxt(j)}</td><td class="r num">${nf1.format(j.hrs)}</td><td class="num">${fmtD(j.due)}</td>
     <td class="code">${esc(j.suggested||"–")}</td>
     <td>${j.running?`<span class="mchip run-chip">▶ ${esc(j.machine)} · çalışıyor</span>`:`<select class="sel ${j.override?"override":""}" data-part="${esc(j.key)}" aria-label="${esc(j.part)} makinesi">
@@ -1111,7 +1114,7 @@ const DEF={
   siparisler:{list:()=>S.orders,title:"Sipariş",cols:[
       {k:"no",l:"Sipariş No",code:1},{k:"customer",l:"Müşteri"},{k:"product",l:"Mamul",code:1},{k:"qty",l:"Adet",n:1},{k:"due",l:"Termin",d:1},{k:"extra",l:"Stok payı",p:1},{k:"stock",l:"Eldeki stok",n:1},{k:"prio",l:"Öncelik",n:1}],
     fields:[{k:"no",l:"Sipariş No",req:1},{k:"customer",l:"Müşteri"},{k:"product",l:"Mamul kodu",req:1,list:()=>[...new Set(S.bom.map(b=>b.product))]},{k:"qty",l:"Sipariş adedi",type:"number",req:1},
-      {k:"due",l:"Termin",type:"date",req:1},{k:"extra",l:"Stok payı (%)",type:"number",pct:1,hint:"Siparişin üzerine üretilecek pay"},{k:"stock",l:"Eldeki mamul stoğu",type:"number",hint:"Aynı mamulün tüm siparişlerinden bir kez düşülür"},{k:"orderDate",l:"Sipariş tarihi",type:"date"},{k:"prio",l:"Öncelik",type:"number"}],
+      {k:"due",l:"Termin",type:"date",req:1},{k:"extra",l:"Stok payı (%)",type:"number",pct:1,hint:"Siparişin üzerine üretilecek pay"},{k:"stock",l:"Eldeki mamul stoğu",type:"number",hint:"Aynı mamulün tüm siparişlerinden bir kez düşülür"},{k:"orderDate",l:"Sipariş tarihi",type:"date"},{k:"prio",l:"Öncelik",type:"number",hint:"1 = acil, 2 = normal (boş bırakılırsa), 3 = düşük. Plan önce önceliğe, sonra termine göre sıralanır."}],
     paste:["no","customer","product","qty","due","extra","stock","orderDate"],pasteHint:"Sipariş No · Müşteri · Mamul · Adet · Termin (gg.aa.yyyy) · Stok payı % · Eldeki stok · Sipariş tarihi"},
   agac:{list:()=>S.bom,title:"Reçete satırı",cols:[{k:"product",l:"Mamul",code:1},{k:"part",l:"Bileşen",code:1},{k:"name",l:"Bileşen adı"},{k:"cat",l:"Grup",f:b=>catOf(b)},{k:"qty",l:"Miktar",f:b=>nfQ.format(+b.qty||0)},{k:"unit",l:"Birim",f:b=>b.unit||defUnit(b)},{k:"scrap",l:"Fire",p:1}],
     fields:[{k:"product",l:"Mamul kodu",req:1,list:()=>[...new Set([...S.orders.map(o=>o.product),...S.bom.map(b=>b.product)])]},{k:"part",l:"Bileşen kodu",req:1,list:()=>[...new Set([...S.molds.map(k=>k.part),...(S.materials||[]).map(m=>m.code)])]},{k:"name",l:"Bileşen adı"},
@@ -1333,6 +1336,7 @@ function vAyar(){
     <div class="field"><label><input type="checkbox" name="useStock" ${st.useStock!==false?"checked":""} style="width:auto;margin-right:6px">Eldeki mamul stoğunu ihtiyaçtan düş</label></div>
     <div class="field"><label><input type="checkbox" name="autoBom" ${st.autoBom!==false?"checked":""} style="width:auto;margin-right:6px">Ürün ağacı yoksa alt parçaları koddan bul (KR-388 → KR-388-1, KR-388-2)</label></div>
     <div class="field"><label><input type="checkbox" name="saturday" ${st.saturday?"checked":""} style="width:auto;margin-right:6px">Cumartesi çalışılıyor</label></div>
+    <div class="field"><label><input type="checkbox" name="usePrio" ${st.usePrio!==false?"checked":""} style="width:auto;margin-right:6px">Sipariş önceliğini sıralamada kullan (1 acil · 2 normal · 3 düşük)</label></div>
     <div class="field" style="justify-content:end"><button class="btn btn-primary" type="submit" style="align-self:start">Ayarları kaydet</button></div>
   </form></div>
   <div class="panel"><div class="panel-head"><h2 class="panel-title">Veri</h2><span class="panel-sub">Kayıtlar yalnızca bu tarayıcıda tutulur · son yedek: ${S.lastBackup?fmtDT(new Date(S.lastBackup)):"hiç alınmadı"} · başka bilgisayarda devam etmek için yedeği orada yükleyin</span></div>
@@ -1345,7 +1349,7 @@ function vAyar(){
     </div></div>
   <p class="note">Planlama mantığı: siparişler stok payıyla mamul ihtiyacına, ürün ağacı ile parça ihtiyacına çevrilir. Saatlik üretim 3600 / çevrim × göz sayısıdır. Net saat/gün = vardiya × saat × verim. İşler termin sırasıyla yerleştirilir; her iş uygun makineler arasından en düşük skoru alana verilir: makinedeki yük (gün), aynı hammadde varsa tercih payı kadar düşülür, plan ufku aşılıyorsa ceza eklenir. Robotlu kalıplar yalnızca robotu olan makinelere atanır; robot gerektirmeyen kalıplar robotlu makineyi ancak koruma payından daha büyük bir avantaj varsa kullanır.</p>`;
   $("#setf").onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target);
-    st.horizon=Math.max(1,Math.round(num(fd.get("horizon"))||22));st.start=fd.get("start")||"";st.shiftStart=fd.get("shiftStart")||"08:00";st.bonus=num(fd.get("bonus"))||0;st.changeover=num(fd.get("changeover"))||0;st.batchDays=Math.max(0,Math.round(num(fd.get("batchDays"))));if(isNaN(st.batchDays))st.batchDays=7;st.saturday=!!fd.get("saturday");st.robotPay=num(fd.get("robotPay"));if(isNaN(st.robotPay))st.robotPay=1;st.exclude=String(fd.get("exclude")||"").trim();st.leadDays=Math.round(num(fd.get("leadDays")));if(isNaN(st.leadDays))st.leadDays=30;st.useStock=!!fd.get("useStock");st.autoBom=!!fd.get("autoBom");st.mbDefault=num(fd.get("mbDefault"))/100;if(isNaN(st.mbDefault))st.mbDefault=0.02;
+    st.horizon=Math.max(1,Math.round(num(fd.get("horizon"))||22));st.start=fd.get("start")||"";st.shiftStart=fd.get("shiftStart")||"08:00";st.bonus=num(fd.get("bonus"))||0;st.changeover=num(fd.get("changeover"))||0;st.batchDays=Math.max(0,Math.round(num(fd.get("batchDays"))));if(isNaN(st.batchDays))st.batchDays=7;st.saturday=!!fd.get("saturday");st.usePrio=!!fd.get("usePrio");st.robotPay=num(fd.get("robotPay"));if(isNaN(st.robotPay))st.robotPay=1;st.exclude=String(fd.get("exclude")||"").trim();st.leadDays=Math.round(num(fd.get("leadDays")));if(isNaN(st.leadDays))st.leadDays=30;st.useStock=!!fd.get("useStock");st.autoBom=!!fd.get("autoBom");st.mbDefault=num(fd.get("mbDefault"))/100;if(isNaN(st.mbDefault))st.mbDefault=0.02;
     save();render();toast("Ayarlar kaydedildi")};
   const confirmBtn=(btn,label,fn)=>{btn.onclick=()=>{$("#dataHint").innerHTML="";const b=document.createElement("button");b.className="btn btn-danger";b.type="button";b.textContent=label;b.onclick=fn;$("#dataHint").append("Emin misiniz? ",b)}};
   $("#allBtn").onclick=()=>$("#allIn").click();

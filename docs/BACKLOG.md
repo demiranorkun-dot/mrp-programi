@@ -15,7 +15,7 @@ Bir seferde tek görev. Her görev ayrı dalda, testlerle birlikte. Durum: ⬜ a
 ## Üretim planlama
 - ⬜ Makine bakım / arıza duruşlarının takvime kapalı zaman olarak girilmesi.
 - ⬜ Günlük iş emri çıktısı (ustabaşı için makine bazında liste).
-- ⬜ Sipariş önceliğinin (öncelik alanı) sıralamaya etkisi — alan var, motorda kullanılmıyor.
+- ✅ Sipariş önceliğinin (öncelik alanı) sıralamaya etkisi — 1 acil · 2 normal · 3 düşük; Ayarlar'dan kapatılabilir.
 
 ## Yönetim paneli
 - ⬜ Plan / gerçekleşen karşılaştırması (geçmiş planların saklanması gerekiyor).

@@ -41,3 +41,15 @@ const sum = js => js.reduce((a, j) => a + j.need, 0);
   const lane = R.lanes[js[0].machine], i2 = lane.findIndex(s => s.job === js[1]);
   if (i2 > 0 && lane[i2 - 1].job === js[0]) t.ok(lane[i2].coA == null, 'aynı kalıp art arda gelirse kalıp değişim süresi eklenmiyor');
   else t.ok(true, 'aynı kalıp art arda değil (arada başka iş var), kalıp değişimi normal'); }
+
+t.group('6 · Sipariş önceliği');
+{ const A = fresh(), part = fixture(A, 10, 40, { o1: { prio: 3 }, o2: { prio: 1 } }); const R = A.compute(), js = jobsOf(R, part);
+  const acil = js.find(j => j.orders.includes('T-2')), dusuk = js.find(j => j.orders.includes('T-1'));
+  const s = j => R.lanes[j.machine].find(x => x.job === j);
+  t.ok(acil && dusuk && acil.prio === 1 && dusuk.prio === 3, 'iş, siparişinin önceliğini taşıyor');
+  t.ok(acil && dusuk && s(acil).startDT < s(dusuk).startDT, 'acil (1) sipariş, daha erken terminli düşük (3) öncelikli siparişten önce başlıyor'); }
+{ const A = fresh(), part = fixture(A, 10, 40, { o1: { prio: 3 }, o2: { prio: 1 } }); A.S.settings.usePrio = false; const R = A.compute(), js = jobsOf(R, part);
+  const s = j => R.lanes[j.machine].find(x => x.job === j);
+  t.ok(s(js.find(j => j.orders.includes('T-1'))).startDT < s(js.find(j => j.orders.includes('T-2'))).startDT, 'öncelik kapalıyken yalnızca termin sırası'); }
+{ const A = fresh(), part = fixture(A, 10, 40, { o1: { prio: '' }, o2: { prio: null } }); const js = jobsOf(A.compute(), part);
+  t.ok(js.every(j => j.prio === 2), 'boş öncelik = normal (2)'); }
