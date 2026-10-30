@@ -55,7 +55,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .nav button:focus-visible{outline:2px solid var(--amber)}
 .nav svg{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
 .nav .count{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--side-muted)}
-.side-foot{margin-top:auto;padding:0 18px;font-size:12px;color:var(--side-muted)}
+.side-foot{margin-top:auto;padding:0 18px;font-size:12px;color:var(--side-muted)}.ord{font-size:11px;color:var(--muted);font-family:inherit;white-space:nowrap}
 
 .main{min-width:0;display:flex;flex-direction:column}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line);padding-block:12px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:12px;flex-wrap:wrap}
@@ -399,34 +399,52 @@ function compute(){
   for(const o of S.orders){if(excl.some(p=>String(o.product).toUpperCase().startsWith(p)))continue;
     const q=Math.ceil((+o.qty||0)*(1+(+o.extra||0)));if(!prod[o.product])prod[o.product]={gross:0,qty:0,due:null,stock:0};const P=prod[o.product];P.gross+=q;
     if(o.stock!==""&&o.stock!=null)P.stock=Math.max(P.stock,+o.stock||0);
-    if(o.due&&(!P.due||o.due<P.due))P.due=o.due}
-  for(const P of Object.values(prod))P.qty=st.useStock===false?P.gross:Math.max(0,P.gross-P.stock);
+    if(o.due&&(!P.due||o.due<P.due))P.due=o.due;
+    (P.lots=P.lots||[]).push({due:o.due||null,qty:q,no:o.no||"",prio:o.prio})}
+  for(const P of Object.values(prod)){P.qty=st.useStock===false?P.gross:Math.max(0,P.gross-P.stock);
+    // sipariş bazında talep: eldeki stok önce en erken terminli siparişten düşülür
+    P.lots.sort((a,b)=>(a.due||"9").localeCompare(b.due||"9"));let left=st.useStock===false?0:P.stock;
+    for(const l of P.lots){const u=Math.min(left,l.qty);l.qty-=u;left-=u}P.lots=P.lots.filter(l=>l.qty>0)}
   // multi-level recipe explosion: semi-finished parts go to molding (or further down), everything else is bought
   const parts={},buy={},bomBy={};S.bom.forEach(b=>{(bomBy[b.product]=bomBy[b.product]||[]).push(b)});
   const molded=new Set(S.molds.map(k=>k.part));
-  const put=(tgt,b,n,due,root)=>{const e=tgt[b.part]=tgt[b.part]||{need:0,due:null,products:new Set(),byProd:{},cat:catOf(b),unit:b.unit||defUnit(b),name:b.name||""};
-    e.need+=n;e.products.add(root);e.byProd[root]=(e.byProd[root]||0)+n;if(due&&(!e.due||due<e.due))e.due=due};
-  const explode=(pc,qty,due,root,depth)=>{for(const b of bomBy[pc]||[]){const n=qty*(+b.qty||0)*(1+(+b.scrap||0));if(!(n>0))continue;
-    if(isProd(b)){if(molded.has(b.part)||!bomBy[b.part])put(parts,b,n,due,root);if(bomBy[b.part]&&depth<6)explode(b.part,n,due,root,depth+1)}
-    else put(buy,b,n,due,root)}};
-  for(const [pc,p] of Object.entries(prod)){if(p.qty&&bomBy[pc])explode(pc,p.qty,p.due,pc,0)}
+  const put=(tgt,b,n,due,root,lot)=>{const e=tgt[b.part]=tgt[b.part]||{need:0,due:null,products:new Set(),byProd:{},cat:catOf(b),unit:b.unit||defUnit(b),name:b.name||"",lots:[]};
+    e.need+=n;e.products.add(root);e.byProd[root]=(e.byProd[root]||0)+n;if(due&&(!e.due||due<e.due))e.due=due;
+    if(lot)e.lots.push({due,n,root,no:lot.no,prio:lot.prio})};
+  const explode=(pc,qty,due,root,depth,lot)=>{for(const b of bomBy[pc]||[]){const n=qty*(+b.qty||0)*(1+(+b.scrap||0));if(!(n>0))continue;
+    if(isProd(b)){if(molded.has(b.part)||!bomBy[b.part])put(parts,b,n,due,root,lot);if(bomBy[b.part]&&depth<6)explode(b.part,n,due,root,depth+1,lot)}
+    else put(buy,b,n,due,root,lot)}};
+  for(const [pc,p] of Object.entries(prod)){if(p.qty&&bomBy[pc])for(const l of p.lots)explode(pc,l.qty,l.due,pc,0,l)}
   const bomProducts=new Set(S.bom.map(b=>b.product));const unmatched=[];let autoLinked=0;
-  const addPart=(pc,part,n,due)=>{if(!parts[part])parts[part]={need:0,due:null,products:new Set()};parts[part].need+=n;parts[part].products.add(pc);if(due&&(!parts[part].due||due<parts[part].due))parts[part].due=due};
+  const addPart=(pc,part,n,due,lot)=>{if(!parts[part])parts[part]={need:0,due:null,products:new Set(),lots:[]};parts[part].need+=n;parts[part].products.add(pc);if(due&&(!parts[part].due||due<parts[part].due))parts[part].due=due;
+    if(lot)parts[part].lots.push({due,n,root:pc,no:lot.no,prio:lot.prio})};
+  const addLots=(pc,part,p)=>p.lots.forEach(l=>addPart(pc,part,l.qty,l.due,l));
   for(const [pc,p] of Object.entries(prod)){if(bomProducts.has(pc)||!p.qty)continue;
-    if(S.molds.some(k=>k.part===pc)){addPart(pc,pc,p.qty,p.due);continue}
+    if(S.molds.some(k=>k.part===pc)){addLots(pc,pc,p);continue}
     if(st.autoBom!==false){const re=new RegExp("^"+String(pc).replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"-\\d+$");const subs=[...new Set(S.molds.filter(k=>re.test(k.part)).map(k=>k.part))];
-      if(subs.length){subs.forEach(s=>addPart(pc,s,p.qty,p.due));autoLinked++;continue}}
+      if(subs.length){subs.forEach(s=>addLots(pc,s,p));autoLinked++;continue}}
     unmatched.push(pc)}
   const mByCode={};S.machines.forEach(m=>mByCode[m.code]=m);
   const jobs=[];const missing=[];
+  // sipariş bazında işler: aynı parçanın terminleri birbirine yakın (st.batchDays gün) siparişleri tek işte toplanır,
+  // uzak terminliler ayrı iş olur. batchDays=0 ya da aile kalıbı: eski davranış (parçanın tüm ihtiyacı tek iş).
+  const batchDays=st.batchDays==null||st.batchDays===""?7:+st.batchDays,famSet=S.family||{};
+  const dayDiff=(a,b)=>(parseISO(b)-parseISO(a))/864e5;
+  const groupLots=(v,mold)=>{const L=(v.lots||[]).slice();
+    if(!(batchDays>0)||famSet[String(mold.code)]||L.length<2)return[{need:v.need,due:v.due,products:[...v.products],orders:[...new Set(L.map(l=>l.no).filter(Boolean))]}];
+    L.sort((a,b)=>(a.due||"9").localeCompare(b.due||"9"));const gs=[];let g=null;
+    for(const l of L){if(!g||(g.due&&!l.due)||(g.due&&l.due&&dayDiff(g.due,l.due)>batchDays)||(!g.due&&l.due)){g={need:0,due:l.due||null,products:new Set(),orders:new Set()};gs.push(g)}
+      g.need+=l.n;g.products.add(l.root);if(l.no)g.orders.add(l.no)}
+    return gs.map(x=>({need:x.need,due:x.due,products:[...x.products],orders:[...x.orders]}))};
   for(const [part,v] of Object.entries(parts)){
     const mold=S.molds.find(k=>k.part===part);
     if(!mold){missing.push(part);continue}
     const rate=(+mold.cycle>0)?3600/(+mold.cycle)*(+mold.cav||1):0;
-    const hrs=rate?v.need/rate:0; const gPer=(+mold.partG||0)+(+mold.runnerG||0)/(+mold.cav||1);
-    const kg=v.need*gPer/1000;
-    jobs.push({part,key:part,mold,need:v.need,due:v.due,products:[...v.products],rate,hrs,mat:mold.mat,kgMain:kg*(1-mbr(mold)),kgMb:kg*mbr(mold),needR:mold.mode==="Robotlu",listed:(mold.machines||[]).filter(c=>mByCode[c])});
-    const jj=jobs[jobs.length-1];jj.compat=jj.listed.filter(c=>!jj.needR||hasRobot(mByCode[c]));
+    const gPer=(+mold.partG||0)+(+mold.runnerG||0)/(+mold.cav||1);
+    groupLots(v,mold).forEach((g,gi)=>{
+      const hrs=rate?g.need/rate:0,kg=g.need*gPer/1000;
+      jobs.push({part,key:gi?part+"@"+(g.due||"termsiz"):part,batch:gi,mold,need:g.need,due:g.due,products:g.products,orders:g.orders,rate,hrs,mat:mold.mat,kgMain:kg*(1-mbr(mold)),kgMb:kg*mbr(mold),needR:mold.mode==="Robotlu",listed:(mold.machines||[]).filter(c=>mByCode[c])});
+      const jj=jobs[jobs.length-1];jj.compat=jj.listed.filter(c=>!jj.needR||hasRobot(mByCode[c]))});
   }
   // family molds: parts from one mold are pressed together as one job
   const fam=S.family||{};const byCode={};jobs.forEach(j=>{const c=String(j.mold.code);if(fam[c])(byCode[c]=byCode[c]||[]).push(j)});
@@ -452,17 +470,18 @@ function compute(){
     const gPer=(+mold.partG||0)+(+mold.runnerG||0)/(+mold.cav||1),kg=qty*gPer/1000;
     runs.push({part:rp,key:"RUN:"+m.code,mold,need:qty,due:job?job.due:null,products:job?job.products:[],rate,hrs:famHrs??qty/rate,mat:mold.mat,kgMain:kg*(1-mbr(mold)),kgMb:kg*mbr(mold),needR:mold.mode==="Robotlu",listed:[m.code],compat:[m.code],running:true,machine:m.code,suggested:m.code,compatible:true,override:false});
     load[m.code]+=famHrs??qty/rate;mats[m.code].add(mold.mat)}
+  const moldAt={}; /* aynı kalıbın sonraki partisi aynı makineye yönelsin: kalıp taşınmaz, makine kalıp beklemez */
   for(const j of jobs){
-    let best=null,bestScore=Infinity;
+    let best=null,bestScore=Infinity;const mkc=String(j.mold.code),prefM=j.batch?moldAt[mkc]:null;
     for(const c of j.compat){const m=mByCode[c],n=netHours(m);if(!n)continue;
       const l=load[c]/n, add=(j.hrs+(load[c]>0?co:0))/n;
-      const sc=l-(mats[c].has(j.mat)?bonus:0)+(l+add>H?1000:0)+(!j.needR&&hasRobot(m)?robotPay:0);
+      const sc=l-(mats[c].has(j.mat)?bonus:0)+(l+add>H?1000:0)+(!j.needR&&hasRobot(m)?robotPay:0)+(prefM&&prefM!==c?100:0);
       if(sc<bestScore){bestScore=sc;best=c}}
     j.suggested=best;
     const ov=S.overrides[j.key];
     j.machine=(ov&&mByCode[ov])?ov:best; j.override=!!(ov&&mByCode[ov]);
     j.compatible=j.machine?j.compat.includes(j.machine):false;
-    if(j.machine){load[j.machine]+=j.hrs+(load[j.machine]>0?co:0);mats[j.machine].add(j.mat)}
+    if(j.machine){load[j.machine]+=j.hrs+(load[j.machine]>0?co:0);mats[j.machine].add(j.mat);if(!moldAt[mkc])moldAt[mkc]=j.machine}
   }
   jobs.unshift(...runs);
   // sequence per machine: group same material while respecting due order
@@ -486,12 +505,12 @@ function compute(){
   const busy={},waits=[];
   const stt=S.machines.map(m=>{const off=offOf(m);m._off=off;return{m,n:netHours(m),L:dayLenOf(m),lane:lanes[m.code],i:0,t:off,off}});
   for(;;){let p=null;for(const x of stt){if(!x.n||x.i>=x.lane.length)continue;if(!p||x.t<p.t)p=x}if(!p)break;
-    const s=p.lane[p.i],n=p.n,L=p.L,coD=p.i>0?co/L:0,dur=s.hrs/n,mk=String(s.mold.code);const base=p.t+coD;let start=base,moved=true,by=null;
+    const s=p.lane[p.i],n=p.n,L=p.L,sameMold=p.i>0&&String(p.lane[p.i-1].mold.code)===String(s.mold.code),coD=p.i>0&&!sameMold?co/L:0,dur=s.hrs/n,mk=String(s.mold.code);const base=p.t+coD;let start=base,moved=true,by=null;
     const iv=(busy[mk]||[]).filter(x=>x[2]!==p.m.code).sort((a,b)=>a[0]-b[0]);
     while(moved){moved=false;for(const x of iv){if(start<x[1]-1e-9&&start+dur>x[0]+1e-9){start=x[1];by=x[2];moved=true}}}
     s.wait=(start-base)*L;s.waitBy=by;if(s.wait>0.05)waits.push(s);
-    s.coA=p.i>0?start-coD:null;s.startA=start;s.endA=start+dur;s.L=L;s.net=n;
-    s.coStart=p.i>0?(start-coD-p.off)*n:null;s.startH=(start-p.off)*n;s.endH=(start+dur-p.off)*n;
+    s.coA=coD>0?start-coD:null;s.startA=start;s.endA=start+dur;s.L=L;s.net=n;
+    s.coStart=coD>0?(start-coD-p.off)*n:null;s.startH=(start-p.off)*n;s.endH=(start+dur-p.off)*n;
     s.job.net=n;s.job.L=L;s.job.endA=Math.max(s.job.endA||0,start+dur);
     (busy[mk]=busy[mk]||[]).push([start,start+dur,p.m.code]);p.t=start+dur;p.i++}
   for(const x of stt){const m=x.m;m._load=(x.t-x.off)*x.n;m._days=x.t-x.off;m._util=H?m._days/H:0;m._jobs=x.lane.length;maxDays.push(x.t)}
@@ -667,7 +686,7 @@ function vPlan(R){
   $("#view").innerHTML=`
   <div class="panel"><div class="panel-head"><div><h2 class="panel-title">Parça bazlı plan</h2><div class="panel-sub">Öneri motoru uygun makineler içinde önce aynı hammaddeyi çalıştıranı, sonra en az yüklüsünü seçer. Beğenmediğiniz satırda makineyi elle değiştirin.</div></div></div>
   <div class="tbl-wrap"><table><thead><tr><th>Parça</th><th>Kalıp</th><th>Hammadde</th><th>Çalışma</th><th class="r">İhtiyaç</th><th class="r">Saat</th><th>Termin</th><th>Öneri</th><th>Makine</th><th>Başlangıç</th><th>Bitiş</th><th>Durum</th></tr></thead><tbody>
-  ${R.jobs.map(j=>`<tr><td class="code">${esc(j.part)}</td><td class="code">${esc(j.mold.code)}</td><td>${matTag(j.mat)}</td><td>${modeTag(j.mold.mode)}</td>
+  ${R.jobs.map(j=>`<tr><td class="code">${esc(j.part)}${j.orders&&j.orders.length?`<div class="ord" title="Sipariş no">${esc(j.orders.slice(0,3).join(", "))}${j.orders.length>3?` +${j.orders.length-3}`:""}</div>`:""}</td><td class="code">${esc(j.mold.code)}</td><td>${matTag(j.mat)}</td><td>${modeTag(j.mold.mode)}</td>
     <td class="r num">${needTxt(j)}</td><td class="r num">${nf1.format(j.hrs)}</td><td class="num">${fmtD(j.due)}</td>
     <td class="code">${esc(j.suggested||"–")}</td>
     <td>${j.running?`<span class="mchip run-chip">▶ ${esc(j.machine)} · çalışıyor</span>`:`<select class="sel ${j.override?"override":""}" data-part="${esc(j.key)}" aria-label="${esc(j.part)} makinesi">
@@ -881,7 +900,7 @@ const Dash={
   /* standart maliyet: parça = hammadde + boya + makine saati; mamul = reçete toplamı. Eksik kalem varsa toplam verilmez. */
   cost(S,R){const st=S.settings,mats={};(S.materials||[]).forEach(m=>{mats[String(m.code).trim()]=m});
     const price=c=>{const m=mats[String(c||"").trim()];return m&&m.price!==""&&m.price!=null&&!isNaN(+m.price)?+m.price:null};
-    const mach={};S.machines.forEach(m=>mach[m.code]=m);const jobM={};(R.jobs||[]).forEach(j=>(j.members||[{part:j.part}]).forEach(x=>{if(j.machine)jobM[x.part]=j.machine}));
+    const mach={};S.machines.forEach(m=>mach[m.code]=m);const jobM={};(R.jobs||[]).forEach(j=>(j.members||[{part:j.part}]).forEach(x=>{if(j.machine&&!jobM[x.part])jobM[x.part]=j.machine}));
     const moldOf={};S.molds.forEach(k=>{if(!moldOf[k.part])moldOf[k.part]=k});const mbDef=st.mbDefault==null?0.02:+st.mbDefault;
     const partCost=part=>{const k=moldOf[part];if(!k)return{mat:null,mach:null,miss:["kalıp kaydı"]};const miss=[];let mat=null,machC=null;
       const gPer=(+k.partG||0)+(+k.runnerG||0)/(+k.cav||1),mbC=String(k.mbCode||"").trim(),mb=(+k.mb>0)?+k.mb:(mbC?mbDef:0);
@@ -1306,6 +1325,7 @@ function vAyar(){
     <div class="field"><label for="s-t">Vardiya başlangıç saati</label><input id="s-t" name="shiftStart" type="time" value="${esc(st.shiftStart||"08:00")}"><span class="hint">Günün ilk vardiyasının başladığı saat. Makine, vardiya sayısı × vardiya saati kadar çalışır.</span></div>
     <div class="field"><label for="s-b">Aynı hammadde tercih payı (gün)</label><input id="s-b" name="bonus" inputmode="decimal" value="${esc(st.bonus)}"><span class="hint">Aynı hammaddeyi çalıştıran makine bu kadar gün daha dolu olsa da tercih edilir. 0 yazarsanız sadece yük dengelenir.</span></div>
     <div class="field"><label for="s-c">Kalıp değişim süresi (saat)</label><input id="s-c" name="changeover" inputmode="decimal" value="${esc(st.changeover)}"><span class="hint">Aynı makinede iki iş arasına eklenir</span></div>
+    <div class="field"><label for="s-bd">Sipariş birleştirme penceresi (gün)</label><input id="s-bd" name="batchDays" inputmode="numeric" value="${esc(st.batchDays??7)}"><span class="hint">Aynı parçanın terminleri bu kadar gün içindeki siparişleri tek işte üretilir; daha uzak terminliler ayrı iş olur. 0 = parçanın tüm siparişleri tek iş.</span></div>
     <div class="field"><label for="s-r">Robotlu makineyi koruma payı (gün)</label><input id="s-r" name="robotPay" inputmode="decimal" value="${esc(st.robotPay??1)}"><span class="hint">Robot gerektirmeyen bir parça, robotlu makineye ancak orası bu kadar gün daha boşsa verilir. Robotlu parçalar her zaman robotlu makineye gider.</span></div>
     <div class="field"><label for="s-mb">Varsayılan boya oranı (%)</label><input id="s-mb" name="mbDefault" inputmode="decimal" value="${esc(Math.round((st.mbDefault==null?0.02:st.mbDefault)*1000)/10)}"><span class="hint">Boya kodu olup oranı girilmemiş kalıplarda kullanılır</span></div>
     <div class="field"><label for="s-x">Planlamaya alınmayacak kodlar</label><input id="s-x" name="exclude" value="${esc(st.exclude||"")}" placeholder="Örn. KF-"><span class="hint">Bu öneklerle başlayan mamullerin siparişleri plana girmez. Birden fazlaysa virgülle ayırın.</span></div>
@@ -1325,7 +1345,7 @@ function vAyar(){
     </div></div>
   <p class="note">Planlama mantığı: siparişler stok payıyla mamul ihtiyacına, ürün ağacı ile parça ihtiyacına çevrilir. Saatlik üretim 3600 / çevrim × göz sayısıdır. Net saat/gün = vardiya × saat × verim. İşler termin sırasıyla yerleştirilir; her iş uygun makineler arasından en düşük skoru alana verilir: makinedeki yük (gün), aynı hammadde varsa tercih payı kadar düşülür, plan ufku aşılıyorsa ceza eklenir. Robotlu kalıplar yalnızca robotu olan makinelere atanır; robot gerektirmeyen kalıplar robotlu makineyi ancak koruma payından daha büyük bir avantaj varsa kullanır.</p>`;
   $("#setf").onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target);
-    st.horizon=Math.max(1,Math.round(num(fd.get("horizon"))||22));st.start=fd.get("start")||"";st.shiftStart=fd.get("shiftStart")||"08:00";st.bonus=num(fd.get("bonus"))||0;st.changeover=num(fd.get("changeover"))||0;st.saturday=!!fd.get("saturday");st.robotPay=num(fd.get("robotPay"));if(isNaN(st.robotPay))st.robotPay=1;st.exclude=String(fd.get("exclude")||"").trim();st.leadDays=Math.round(num(fd.get("leadDays")));if(isNaN(st.leadDays))st.leadDays=30;st.useStock=!!fd.get("useStock");st.autoBom=!!fd.get("autoBom");st.mbDefault=num(fd.get("mbDefault"))/100;if(isNaN(st.mbDefault))st.mbDefault=0.02;
+    st.horizon=Math.max(1,Math.round(num(fd.get("horizon"))||22));st.start=fd.get("start")||"";st.shiftStart=fd.get("shiftStart")||"08:00";st.bonus=num(fd.get("bonus"))||0;st.changeover=num(fd.get("changeover"))||0;st.batchDays=Math.max(0,Math.round(num(fd.get("batchDays"))));if(isNaN(st.batchDays))st.batchDays=7;st.saturday=!!fd.get("saturday");st.robotPay=num(fd.get("robotPay"));if(isNaN(st.robotPay))st.robotPay=1;st.exclude=String(fd.get("exclude")||"").trim();st.leadDays=Math.round(num(fd.get("leadDays")));if(isNaN(st.leadDays))st.leadDays=30;st.useStock=!!fd.get("useStock");st.autoBom=!!fd.get("autoBom");st.mbDefault=num(fd.get("mbDefault"))/100;if(isNaN(st.mbDefault))st.mbDefault=0.02;
     save();render();toast("Ayarlar kaydedildi")};
   const confirmBtn=(btn,label,fn)=>{btn.onclick=()=>{$("#dataHint").innerHTML="";const b=document.createElement("button");b.className="btn btn-danger";b.type="button";b.textContent=label;b.onclick=fn;$("#dataHint").append("Emin misiniz? ",b)}};
   $("#allBtn").onclick=()=>$("#allIn").click();
