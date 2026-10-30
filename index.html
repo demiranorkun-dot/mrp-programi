@@ -55,7 +55,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .nav button:focus-visible{outline:2px solid var(--amber)}
 .nav svg{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
 .nav .count{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--side-muted)}
-.side-foot{margin-top:auto;padding:0 18px;font-size:12px;color:var(--side-muted)}.acil{color:var(--bad);font-weight:700;letter-spacing:.03em}.ord{font-size:11px;color:var(--muted);font-family:inherit;white-space:nowrap}
+.side-foot{margin-top:auto;padding:0 18px;font-size:12px;color:var(--side-muted)}.g-down{position:absolute;top:0;bottom:0;pointer-events:none;z-index:3;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--bad) 35%,transparent) 0 4px,transparent 4px 9px);border-inline:1px solid var(--bad)}.acil{color:var(--bad);font-weight:700;letter-spacing:.03em}.ord{font-size:11px;color:var(--muted);font-family:inherit;white-space:nowrap}
 
 .main{min-width:0;display:flex;flex-direction:column}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line);padding-block:12px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:12px;flex-wrap:wrap}
@@ -391,7 +391,12 @@ load();
 /* ---------- planning engine ---------- */
 const netHours=m=>(+m.shifts||0)*(+m.hours||0)*(+m.eff||0);
 const hasRobot=m=>!!m&&(m.robot===true||m.robot==="Var");
-function workDays(start,count,sat){const out=[];const d=parseISO(start);while(out.length<count){const w=d.getDay();if(w!==0&&(sat||w!==6))out.push(new Date(d));d.setDate(d.getDate()+1)}return out}
+function workDays(start,count,sat,hol){const out=[];const d=parseISO(start);while(out.length<count){const w=d.getDay();if(w!==0&&(sat||w!==6)&&!(hol&&hol.has(iso(d))))out.push(new Date(d));d.setDate(d.getDate()+1)}return out}
+/* "2026-10-29, 31.12.2026, 2027-03-19..2027-03-22" → ISO tarih kümesi (tatil / makine duruş günleri) */
+function dateSet(txt){const out=new Set(),norm=t=>{t=String(t).trim();let m=t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);if(m)return iso(new Date(+m[1],+m[2]-1,+m[3]));
+    m=t.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);return m?iso(new Date(+m[3],+m[2]-1,+m[1])):null};
+  String(txt||"").split(/[\s,;]+/).filter(Boolean).forEach(tok=>{const [a,b]=tok.split("..");const x=norm(a),y=b?norm(b):x;if(!x||!y)return;
+    const d=parseISO(x),e=parseISO(y);for(let k=0;d<=e&&k<400;k++){out.add(iso(d));d.setDate(d.getDate()+1)}});return out}
 function compute(){
   const st=S.settings, start=st.start||today();
   const mbr=k=>(+k.mb>0)?+k.mb:(String(k.mbCode||"").trim()?(st.mbDefault==null?0.02:+st.mbDefault):0);
@@ -502,23 +507,30 @@ function compute(){
   // time base: 1 unit = one working day of a machine (shifts × hours, starting at shift start); production runs at efficiency
   const shiftH=(()=>{const [a,b]=String(st.shiftStart||"08:00").split(":").map(Number);return (a||0)+(b||0)/60})();
   const now=new Date(),nowH=now.getHours()+now.getMinutes()/60,startNow=!st.start;
-  const isWork=d=>{const w=d.getDay();return w!==0&&(st.saturday||w!==6)};
+  const hol=dateSet(st.holidays);
+  const isWork=d=>{const w=d.getDay();return w!==0&&(st.saturday||w!==6)&&!hol.has(iso(d))};
+  // makine duruşları (bakım / arıza): çalışma günü sırasına çevrilir; iş bu günlerde durur, sonra devam eder
+  const cal=workDays(start,Math.max(400,H*6),!!st.saturday,hol),calIdx={};cal.forEach((d,i)=>calIdx[iso(d)]=i);
+  const downIdx={};S.machines.forEach(m=>{const ds=[...dateSet(m.down)].map(x=>calIdx[x]).filter(x=>x!=null).sort((a,b)=>a-b);if(ds.length)downIdx[m.code]=ds});
   const dayLenOf=m=>(+m.shifts||0)*(+m.hours||0);
   const offOf=m=>{const L=dayLenOf(m);if(!startNow||!L||!isWork(now))return 0;return Math.min(1,Math.max(0,(nowH-shiftH)/L))};
   const busy={},waits=[];
   const stt=S.machines.map(m=>{const off=offOf(m);m._off=off;return{m,n:netHours(m),L:dayLenOf(m),lane:lanes[m.code],i:0,t:off,off}});
   for(;;){let p=null;for(const x of stt){if(!x.n||x.i>=x.lane.length)continue;if(!p||x.t<p.t)p=x}if(!p)break;
-    const s=p.lane[p.i],n=p.n,L=p.L,sameMold=p.i>0&&String(p.lane[p.i-1].mold.code)===String(s.mold.code),coD=p.i>0&&!sameMold?co/L:0,dur=s.hrs/n,mk=String(s.mold.code);const base=p.t+coD;let start=base,moved=true,by=null;
+    const dn=downIdx[p.m.code]||[],skip=t=>{for(const i of dn)if(t>=i-1e-9&&t<i+1-1e-9)t=i+1;return t},
+      endOf=(t,d)=>{let rem=d;for(const i of dn){if(i+1<=t+1e-9)continue;if(t+rem<=i+1e-9)break;rem-=Math.max(0,i-t);t=i+1}return t+rem};
+    const s=p.lane[p.i],n=p.n,L=p.L,sameMold=p.i>0&&String(p.lane[p.i-1].mold.code)===String(s.mold.code),coD=p.i>0&&!sameMold?co/L:0,dur=s.hrs/n,mk=String(s.mold.code);const base=p.t+coD;let start=skip(base),moved=true,by=null;
     const iv=(busy[mk]||[]).filter(x=>x[2]!==p.m.code).sort((a,b)=>a[0]-b[0]);
-    while(moved){moved=false;for(const x of iv){if(start<x[1]-1e-9&&start+dur>x[0]+1e-9){start=x[1];by=x[2];moved=true}}}
-    s.wait=(start-base)*L;s.waitBy=by;if(s.wait>0.05)waits.push(s);
-    s.coA=coD>0?start-coD:null;s.startA=start;s.endA=start+dur;s.L=L;s.net=n;
-    s.coStart=coD>0?(start-coD-p.off)*n:null;s.startH=(start-p.off)*n;s.endH=(start+dur-p.off)*n;
-    s.job.net=n;s.job.L=L;s.job.endA=Math.max(s.job.endA||0,start+dur);
-    (busy[mk]=busy[mk]||[]).push([start,start+dur,p.m.code]);p.t=start+dur;p.i++}
+    while(moved){moved=false;for(const x of iv){if(start<x[1]-1e-9&&endOf(start,dur)>x[0]+1e-9){start=skip(x[1]);by=x[2];moved=true}}}
+    const end=endOf(start,dur);s.down=end-start-dur>1e-9;
+    s.wait=(start-skip(base))*L;s.waitBy=by;if(s.wait>0.05)waits.push(s);
+    s.coA=coD>0?start-coD:null;s.startA=start;s.endA=end;s.L=L;s.net=n;
+    s.coStart=coD>0?(start-coD-p.off)*n:null;s.startH=(start-p.off)*n;s.endH=(end-p.off)*n;
+    s.job.net=n;s.job.L=L;s.job.endA=Math.max(s.job.endA||0,end);
+    (busy[mk]=busy[mk]||[]).push([start,end,p.m.code]);p.t=end;p.i++}
   for(const x of stt){const m=x.m;m._load=(x.t-x.off)*x.n;m._days=x.t-x.off;m._util=H?m._days/H:0;m._jobs=x.lane.length;maxDays.push(x.t)}
   const span=Math.max(H,Math.ceil(Math.max(0,...maxDays)));
-  const days=workDays(start,span+1,!!st.saturday);
+  const days=workDays(start,span+1,!!st.saturday,hol);
   const dayOf=(h,n)=>days[Math.min(days.length-1,Math.max(0,Math.ceil(h/n)-1))];
   const dtAt=(a,L,isEnd)=>{let i=Math.floor(a+1e-9),f=a-i;if(isEnd&&f<1e-6&&i>0){i-=1;f=1}if(f<0)f=0;const d=new Date(days[Math.min(days.length-1,Math.max(0,i))]);d.setHours(0,0,0,0);return new Date(d.getTime()+(shiftH+f*L)*3600000)};
   for(const j of jobs){
@@ -532,7 +544,7 @@ function compute(){
   for(const m of S.machines)for(const s of lanes[m.code]){if(!s.L||s.startA==null){s.end=null;s.startDT=null;s.endIso="";continue}
     s.startDT=dtAt(s.startA,s.L);s.end=dtAt(s.endA,s.L,true);s.endIso=iso(s.end);if(!s.job.startDT||s.startDT<s.job.startDT)s.job.startDT=s.startDT}
   const matTot={};jobs.forEach(j=>{if(!matTot[j.mat])matTot[j.mat]={main:0,mb:0,parts:0};matTot[j.mat].main+=j.kgMain;matTot[j.mat].mb+=j.kgMb;matTot[j.mat].parts++});
-  const out={jobs,lanes,days,span,start,buy,missing,matTot,prod,unmatched,autoLinked,waits};out.mrp=mrp(out);return out;
+  const out={jobs,lanes,days,span,start,buy,missing,matTot,prod,unmatched,autoLinked,waits,downIdx,hol};out.mrp=mrp(out);return out;
 }
 
 /* ---------- MRP: time-phased material requirements from the schedule ---------- */
@@ -715,11 +727,11 @@ function vTakvim(R){
       const sel=ui.selM===m.code&&ui.selJob===j.key;
       out+=`<button type="button" class="g-bar ${j.level==="warn"?"late":""} ${sel?"sel":""} ${j.running?"run":""} ${j.matShort?"short":""}" data-m="${esc(m.code)}" data-j="${esc(j.key)}" data-sid="${esc(j.sid)}" style="left:${x}px;width:${w}px;background:${matColor(j.mat)}" title="${ix+1}. ${esc(j.part)}${j.segNo===1?" (1. kısım)":j.segNo===2?" (devam)":""} · ${esc(j.mold.code)} · ${esc(j.mat)}\n${nf0.format(j.need)} adet ÷ ${esc(j.mold.cav)} göz × ${esc(j.mold.cycle)} sn = ${nf1.format(j.hrs)} saat baskı\nBaşlangıç ${fmtDT(j.startDT)} · Bitiş ${fmtDT(j.end)}\nTermin ${fmtD(j.due)}${j.running?"\nMakinede şu an çalışıyor (sabit)":"\nSürükleyip başka yere bırakabilirsiniz"}${j.wait>0.05?`\nKalıp ${esc(j.waitBy)} makinesinde olduğu için ${nf1.format(j.wait)} saat bekliyor`:""}">${w>=44?(j.running&&j.segNo!==2?"▶ ":"")+esc(j.part)+(j.segNo===2?" ↻":""):""}${w>=70?`<small>${nf0.format(j.need)} ad</small>`:""}</button>`;
       return out}).join("");
-    return`<div class="g-row ${ui.selM===m.code?"is-sel":""}" data-row="${esc(m.code)}"><div class="g-label" data-pick="${esc(m.code)}" role="button" tabindex="0"><b>${esc(m.code)}</b><span>${esc(m.ton)} ton${hasRobot(m)?" · robot":""} · ${pct(m._util)}</span></div><div class="g-track" style="width:${days.length*DW}px;background-size:${DW}px 100%">${bars}${R.span>H?`<div class="g-horizon" style="left:${H*DW}px" title="Plan ufku"></div>`:""}${!S.settings.start&&m._off?`<div class="g-now" style="left:${m._off*DW}px" title="Şimdi"></div>`:""}</div></div>`}).join("");
+    return`<div class="g-row ${ui.selM===m.code?"is-sel":""}" data-row="${esc(m.code)}"><div class="g-label" data-pick="${esc(m.code)}" role="button" tabindex="0"><b>${esc(m.code)}</b><span>${esc(m.ton)} ton${hasRobot(m)?" · robot":""} · ${pct(m._util)}</span></div><div class="g-track" style="width:${days.length*DW}px;background-size:${DW}px 100%">${bars}${((R.downIdx||{})[m.code]||[]).filter(i=>i<days.length).map(i=>`<div class="g-down" style="left:${i*DW}px;width:${DW}px" title="Duruş (bakım / arıza): ${fmtD(R.days[i])}"></div>`).join("")}${R.span>H?`<div class="g-horizon" style="left:${H*DW}px" title="Plan ufku"></div>`:""}${!S.settings.start&&m._off?`<div class="g-now" style="left:${m._off*DW}px" title="Şimdi"></div>`:""}</div></div>`}).join("");
   $("#view").innerHTML=`
   <div class="panel"><div class="panel-head"><div><h2 class="panel-title">Makine takvimi</h2><div class="panel-sub">Başlangıç ${fmtD(R.start)} · taralı alan kalıp değişimi · işi sürükleyip başka sıraya ya da makineye bırakın · tıklayınca sırası aşağıda açılır</div></div>
     <div class="toolbar">${(Object.keys(S.overrides||{}).length||Object.keys(S.seq||{}).length||Object.keys(S.splits||{}).length)?`<span id="resetWrap"><button class="btn" type="button" id="resetMan">Elle düzenlemeleri sıfırla</button></span>`:""}<div class="seg" role="group" aria-label="Yakınlaştırma">${[["hafta","Hafta"],["gun","Gün"],["vardiya","Vardiya"]].map(([k,t])=>`<button type="button" data-z="${k}" aria-pressed="${ui.zoom===k}">${t}</button>`).join("")}</div></div></div>
-  <div class="panel-body legend" style="padding-block:10px">${mats.map(m=>`<span><i class="sw" style="background:${matColor(m)}"></i>${esc(m)}</span>`).join("")}<span><i class="sw" style="outline:2px solid var(--bad);background:transparent"></i>Gecikme riski</span></div>
+  <div class="panel-body legend" style="padding-block:10px">${mats.map(m=>`<span><i class="sw" style="background:${matColor(m)}"></i>${esc(m)}</span>`).join("")}<span><i class="sw" style="outline:2px solid var(--bad);background:transparent"></i>Gecikme riski</span>${Object.keys(R.downIdx||{}).length?`<span><i class="sw" style="background:repeating-linear-gradient(135deg,var(--bad) 0 2px,transparent 2px 5px)"></i>Makine duruşu</span>`:""}</div>
   <div class="gantt-wrap" id="gwrap"><div class="gantt">${head}${rows}</div></div></div>
   <div class="panel" id="seqPanel"></div>`;
   const drawSeq=()=>{const m=S.machines.find(x=>x.code===ui.selM);const p=$("#seqPanel");if(!m){p.innerHTML=`<div class="empty">Makine yok.</div>`;return}
@@ -844,7 +856,7 @@ const Dash={
     const base=String(part||"").replace(/-\d+$/,"");return base!==part&&Dash.prodMatch(base,p)},
   dueEst(o,lead){if(o.dueEst)return true;if(!o.orderDate||!o.due)return false;return Math.round((parseISO(o.due)-parseISO(o.orderDate))/864e5)===lead},
   weekStart(d){const x=parseISO(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return iso(x)},
-  workdays(from,to,sat){let n=0;const d=parseISO(from),e=parseISO(to);while(d<=e){const w=d.getDay();if(w!==0&&(sat||w!==6))n++;d.setDate(d.getDate()+1)}return n},
+  workdays(from,to,sat,hol){let n=0;const d=parseISO(from),e=parseISO(to);while(d<=e){const w=d.getDay();if(w!==0&&(sat||w!==6)&&!(hol&&hol.has(iso(d))))n++;d.setDate(d.getDate()+1)}return n},
 
   /* açık siparişler: miktar, termin haftası, yaşlanma, mamul bazında net ihtiyaç */
   orders(S,f,t0){const lead=S.settings.leadDays==null?30:+S.settings.leadDays;
@@ -885,7 +897,7 @@ const Dash={
 
   /* makine plan yükü: takvimdeki iş saatleri, seçili tarih aralığına kırpılmış */
   machinePlan(S,R,f,pp,t0){const H=+S.settings.horizon||22;const fromT=f.from?parseISO(f.from).getTime():null,toT=f.to?parseISO(f.to).getTime()+864e5:null;
-    const endH=iso(R.days[Math.min(R.days.length-1,H-1)]||new Date());const days=(f.from||f.to)?Dash.workdays(f.from||t0,f.to||endH,!!S.settings.saturday):H;
+    const endH=iso(R.days[Math.min(R.days.length-1,H-1)]||new Date());const days=(f.from||f.to)?Dash.workdays(f.from||t0,f.to||endH,!!S.settings.saturday,dateSet(S.settings.holidays)):H;
     return S.machines.filter(m=>!f.machine||m.code===f.machine).map(m=>{let load=0,jobs=0;
       for(const s of R.lanes[m.code]||[]){if(!s.startDT||!s.end)continue;const parts=s.members?s.members.map(x=>x.part):[s.part];
         if(f.product&&!parts.some(p=>Dash.partMatch(pp,p,f.product))&&!(s.products||[]).some(p=>Dash.prodMatch(p,f.product)))continue;
@@ -1126,7 +1138,7 @@ const DEF={
       {k:"mbCode",l:"Boya / masterbatch kodu",hint:"Boşsa boyasız; oran girilmemişse Ayarlar'daki varsayılan oran kullanılır"},{k:"mode",l:"Çalışma şekli",opts:["Otomatik","Robotlu","Operatörlü"]},{k:"machines",l:"Uygun makineler",ms:1,full:1}],
     paste:["code","part","cav","cycle","partG","runnerG","mat","mb","machines","mode","mbCode"],pasteHint:"Kalıp · Parça · Göz · Çevrim sn · Parça g · Yolluk g · Hammadde · MB % · Uygun makineler (M01,M02) · Çalışma (Otomatik/Robotlu/Operatörlü) · Boya kodu"},
   makineler:{list:()=>S.machines,title:"Makine",cols:[{k:"code",l:"Makine",code:1},{k:"ton",l:"Tonaj",n:1},{k:"shifts",l:"Vardiya",n:1},{k:"hours",l:"Saat/vardiya",n:1},{k:"eff",l:"Verim",p:1},{k:"robot",l:"Robot",f:m=>hasRobot(m)?"Var":"Yok"},{k:"rPart",l:"Çalışan iş",code:1},{k:"rRemain",l:"Kalan",f:m=>m.rPart?(m.rRemain===""||m.rRemain==null?"tümü":nf0.format(m.rRemain)):""},{k:"_net",l:"Net saat/gün",n:1,f:m=>netHours(m),dec:1},{k:"hourCost",l:"TL / saat",f:m=>m.hourCost===""||m.hourCost==null?"":nfQ.format(+m.hourCost)}],
-    fields:[{k:"code",l:"Makine kodu",req:1,hint:"Kısa ve benzersiz, örn. M09"},{k:"ton",l:"Tonaj",type:"number"},{k:"shifts",l:"Vardiya / gün",type:"number",def:3},{k:"hours",l:"Saat / vardiya",type:"number",def:7.5},{k:"eff",l:"Verim (%)",type:"number",pct:1,def:.85,hint:"Duruş ve kalıp değişimleri payı"},{k:"robot",l:"Robot",opts:["Yok","Var"]},{k:"rPart",l:"Şu an çalışan parça",list:()=>S.molds.map(k=>k.part),hint:"Boş bırakırsanız makine boş kabul edilir"},{k:"rRemain",l:"Bu iş için kalan adet",type:"number",hint:"Boşsa parçanın sipariş ihtiyacının tamamı"},{k:"hourCost",l:"Saat maliyeti (TL)",type:"number",hint:"Makine, işçilik ve enerji dahil saat başına maliyet. Maliyet analizinde kullanılır."}],
+    fields:[{k:"code",l:"Makine kodu",req:1,hint:"Kısa ve benzersiz, örn. M09"},{k:"ton",l:"Tonaj",type:"number"},{k:"shifts",l:"Vardiya / gün",type:"number",def:3},{k:"hours",l:"Saat / vardiya",type:"number",def:7.5},{k:"eff",l:"Verim (%)",type:"number",pct:1,def:.85,hint:"Duruş ve kalıp değişimleri payı"},{k:"robot",l:"Robot",opts:["Yok","Var"]},{k:"rPart",l:"Şu an çalışan parça",list:()=>S.molds.map(k=>k.part),hint:"Boş bırakırsanız makine boş kabul edilir"},{k:"rRemain",l:"Bu iş için kalan adet",type:"number",hint:"Boşsa parçanın sipariş ihtiyacının tamamı"},{k:"hourCost",l:"Saat maliyeti (TL)",type:"number",hint:"Makine, işçilik ve enerji dahil saat başına maliyet. Maliyet analizinde kullanılır."},{k:"down",l:"Duruş günleri (bakım / arıza)",hint:"Örn. 05.11.2026 ya da 2026-11-05..2026-11-07 (aralık). Virgülle ayırın. Plandaki iş bu günlerde durur, sonra devam eder."}],
     paste:["code","ton","shifts","hours","eff","robot","hourCost"],pasteHint:"Makine · Tonaj · Vardiya · Saat/vardiya · Verim % · Robot (Var/Yok) · Saat maliyeti TL"},
   uretim:{list:()=>S.production||(S.production=[]),title:"Üretim kaydı",cols:[{k:"date",l:"Tarih",d:1},{k:"shift",l:"Vardiya"},{k:"machine",l:"Makine",code:1},{k:"part",l:"Parça",code:1},{k:"good",l:"Sağlam",n:1},{k:"scrap",l:"Fire",n:1},{k:"runH",l:"Çalışma sa",f:r=>r.runH===""||r.runH==null?"":nf1.format(+r.runH)},{k:"downH",l:"Duruş sa",f:r=>r.downH===""||r.downH==null?"":nf1.format(+r.downH)},{k:"reason",l:"Duruş nedeni"}],
     fields:[{k:"date",l:"Üretim tarihi",type:"date",req:1},{k:"shift",l:"Vardiya",opts:["1","2","3"]},{k:"machine",l:"Makine",req:1,list:()=>S.machines.map(m=>m.code)},{k:"part",l:"Parça kodu",req:1,list:()=>S.molds.map(k=>k.part)},
@@ -1336,6 +1348,7 @@ function vAyar(){
     <div class="field"><label><input type="checkbox" name="useStock" ${st.useStock!==false?"checked":""} style="width:auto;margin-right:6px">Eldeki mamul stoğunu ihtiyaçtan düş</label></div>
     <div class="field"><label><input type="checkbox" name="autoBom" ${st.autoBom!==false?"checked":""} style="width:auto;margin-right:6px">Ürün ağacı yoksa alt parçaları koddan bul (KR-388 → KR-388-1, KR-388-2)</label></div>
     <div class="field"><label><input type="checkbox" name="saturday" ${st.saturday?"checked":""} style="width:auto;margin-right:6px">Cumartesi çalışılıyor</label></div>
+    <div class="field" style="grid-column:1/-1"><label for="s-hol">Fabrika tatil günleri</label><textarea id="s-hol" name="holidays" rows="2" style="width:100%;font:inherit" placeholder="29.10.2026, 31.12.2026..01.01.2027">${esc(st.holidays||"")}</textarea><span class="hint">Bu günler hiçbir makinede çalışılmaz. Tarih (29.10.2026) ya da aralık (2027-03-19..2027-03-22), virgülle ayırın. <button class="btn" type="button" id="holFill" style="padding:2px 8px;font-size:12px">Sabit resmi tatilleri ekle</button> (dini bayramları kendiniz ekleyin)</span></div>
     <div class="field"><label><input type="checkbox" name="usePrio" ${st.usePrio!==false?"checked":""} style="width:auto;margin-right:6px">Sipariş önceliğini sıralamada kullan (1 acil · 2 normal · 3 düşük)</label></div>
     <div class="field" style="justify-content:end"><button class="btn btn-primary" type="submit" style="align-self:start">Ayarları kaydet</button></div>
   </form></div>
@@ -1348,8 +1361,11 @@ function vAyar(){
       <span class="hint" id="dataHint"></span>
     </div></div>
   <p class="note">Planlama mantığı: siparişler stok payıyla mamul ihtiyacına, ürün ağacı ile parça ihtiyacına çevrilir. Saatlik üretim 3600 / çevrim × göz sayısıdır. Net saat/gün = vardiya × saat × verim. İşler termin sırasıyla yerleştirilir; her iş uygun makineler arasından en düşük skoru alana verilir: makinedeki yük (gün), aynı hammadde varsa tercih payı kadar düşülür, plan ufku aşılıyorsa ceza eklenir. Robotlu kalıplar yalnızca robotu olan makinelere atanır; robot gerektirmeyen kalıplar robotlu makineyi ancak koruma payından daha büyük bir avantaj varsa kullanır.</p>`;
+  $("#holFill").onclick=()=>{const ta=$("#s-hol"),y=new Date().getFullYear(),fixed=["01-01","04-23","05-01","05-19","07-15","08-30","10-29"];
+    const have=dateSet(ta.value),add=[y,y+1].flatMap(Y=>fixed.map(md=>`${Y}-${md}`)).filter(d=>!have.has(d)&&d>=today());
+    ta.value=[ta.value.trim(),add.map(d=>fmtD(d)).join(", ")].filter(Boolean).join(", ");toast(add.length?`${add.length} resmi tatil eklendi, kaydetmeyi unutmayın`:"Sabit resmi tatiller zaten listede")};
   $("#setf").onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target);
-    st.horizon=Math.max(1,Math.round(num(fd.get("horizon"))||22));st.start=fd.get("start")||"";st.shiftStart=fd.get("shiftStart")||"08:00";st.bonus=num(fd.get("bonus"))||0;st.changeover=num(fd.get("changeover"))||0;st.batchDays=Math.max(0,Math.round(num(fd.get("batchDays"))));if(isNaN(st.batchDays))st.batchDays=7;st.saturday=!!fd.get("saturday");st.usePrio=!!fd.get("usePrio");st.robotPay=num(fd.get("robotPay"));if(isNaN(st.robotPay))st.robotPay=1;st.exclude=String(fd.get("exclude")||"").trim();st.leadDays=Math.round(num(fd.get("leadDays")));if(isNaN(st.leadDays))st.leadDays=30;st.useStock=!!fd.get("useStock");st.autoBom=!!fd.get("autoBom");st.mbDefault=num(fd.get("mbDefault"))/100;if(isNaN(st.mbDefault))st.mbDefault=0.02;
+    st.horizon=Math.max(1,Math.round(num(fd.get("horizon"))||22));st.start=fd.get("start")||"";st.shiftStart=fd.get("shiftStart")||"08:00";st.bonus=num(fd.get("bonus"))||0;st.changeover=num(fd.get("changeover"))||0;st.batchDays=Math.max(0,Math.round(num(fd.get("batchDays"))));if(isNaN(st.batchDays))st.batchDays=7;st.saturday=!!fd.get("saturday");st.usePrio=!!fd.get("usePrio");st.holidays=String(fd.get("holidays")||"").trim();st.robotPay=num(fd.get("robotPay"));if(isNaN(st.robotPay))st.robotPay=1;st.exclude=String(fd.get("exclude")||"").trim();st.leadDays=Math.round(num(fd.get("leadDays")));if(isNaN(st.leadDays))st.leadDays=30;st.useStock=!!fd.get("useStock");st.autoBom=!!fd.get("autoBom");st.mbDefault=num(fd.get("mbDefault"))/100;if(isNaN(st.mbDefault))st.mbDefault=0.02;
     save();render();toast("Ayarlar kaydedildi")};
   const confirmBtn=(btn,label,fn)=>{btn.onclick=()=>{$("#dataHint").innerHTML="";const b=document.createElement("button");b.className="btn btn-danger";b.type="button";b.textContent=label;b.onclick=fn;$("#dataHint").append("Emin misiniz? ",b)}};
   $("#allBtn").onclick=()=>$("#allIn").click();
