@@ -11,7 +11,8 @@ else {
   const pair = () => [loadApp(base), loadFile(path.join(ROOT, 'index.html'))];
   // Bilinçli davranış değişiklikleri burada kapatılır, böylece geri kalan her şey main ile birebir karşılaştırılır.
   // batchDays=0: sipariş bazında iş ayırma kapalı (main'deki parça başına tek iş davranışı)
-  const legacy = A => { A.S.settings.batchDays = 0; return A; };
+  // usePrio=false: sipariş önceliği sıralamaya katılmaz (main'de öncelik kullanılmıyordu)
+  const legacy = A => { A.S.settings.batchDays = 0; A.S.settings.usePrio = false; return A; };
   let [o, n] = pair(); legacy(n); t.ok(sig(o.compute()) === sig(n.compute()), 'örnek veri: eski davranış ayarlarıyla plan ve MRP birebir aynı');
   [o, n] = pair(); if (realData(o) && realData(n)) { legacy(n); t.ok(sig(o.compute()) === sig(n.compute()), 'gerçek veri: eski davranış ayarlarıyla plan ve MRP birebir aynı'); }
 }
