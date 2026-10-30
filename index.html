@@ -55,7 +55,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .nav button:focus-visible{outline:2px solid var(--amber)}
 .nav svg{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
 .nav .count{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--side-muted)}
-.side-foot{margin-top:auto;padding:0 18px;font-size:12px;color:var(--side-muted)}
+.side-foot{margin-top:auto;padding:0 18px;font-size:12px;color:var(--side-muted)}.side-foot.due{color:var(--amber);font-weight:600}.store-warn{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:100;max-width:min(680px,92vw);background:var(--bad);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.25)}
 
 .main{min-width:0;display:flex;flex-direction:column}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line);padding-block:12px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:12px;flex-wrap:wrap}
@@ -307,6 +307,7 @@ details.gaps:not([open])>summary{border-bottom:0}
 </div>
 <div id="modalRoot"></div>
 <div class="toast" id="toast" hidden></div>
+<div class="store-warn" id="storeWarn" role="alert" hidden></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
@@ -384,8 +385,19 @@ function demo(){
     overrides:{}};
 }
 let S;
-function load(){try{const t=localStorage.getItem(KEY);if(t){S=JSON.parse(t);return}}catch(e){}S=demo()}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+/* Kayıt güvenliği: okunamayan veri örnek veriyle EZİLMEZ; yazılamayan kayıt sessizce kaybolmaz. */
+let storeErr=null; /* null | "okuma" | "yazma" */
+function load(){let t=null;try{t=localStorage.getItem(KEY)}catch(e){storeErr="okuma"}
+  if(t){try{S=JSON.parse(t);return}catch(e){storeErr="okuma";try{localStorage.setItem(KEY+"-bozuk-"+Date.now(),t)}catch(e2){}}}
+  S=demo()}
+function save(){if(storeErr==="okuma")return; /* bozuk kaydın üstüne yazma */
+  try{localStorage.setItem(KEY,JSON.stringify(S));if(storeErr){storeErr=null;storeBanner()}}
+  catch(e){storeErr="yazma";storeBanner()}}
+function storeBanner(){const el=typeof document!=="undefined"&&document.getElementById("storeWarn");if(!el)return;
+  el.hidden=!storeErr;
+  el.textContent=storeErr==="yazma"?"Son değişiklikler KAYDEDİLEMEDİ (tarayıcı hafızası dolu ya da kapalı). Sayfayı kapatmadan Ayarlar → Yedek al ile yedek alın.":
+    storeErr==="okuma"?"Kayıtlı veriler okunamadı; örnek veri gösteriliyor ve üstüne yazılmıyor. Ayarlar → Yedekten yükle ile son yedeğinizi yükleyin.":""}
+const backupDue=()=>!S.demo&&(!S.lastBackup||(Date.now()-new Date(S.lastBackup).getTime())>7*864e5);
 load();
 
 /* ---------- planning engine ---------- */
@@ -609,6 +621,9 @@ function renderNav(){
     `<button type="button" data-v="${v.id}" ${v.id===current?'aria-current="page"':""}><svg viewBox="0 0 24 24" aria-hidden="true">${IC[v.id]}</svg>${v.t}${counts[v.id]!=null?`<span class="count">${counts[v.id]}</span>`:""}</button>`).join("");
   $("#demoChip").hidden=!S.demo;
   $("#sideFoot").textContent=S.demo?"Örnek verilerle çalışıyorsunuz. Ayarlar'dan temizleyebilirsiniz.":"Veriler bu tarayıcıda saklanır. Son yedek: "+(S.lastBackup?fmtDT(new Date(S.lastBackup)):"alınmadı");
+  $("#sideFoot").classList.toggle("due",backupDue());
+  if(backupDue())$("#sideFoot").textContent+=" · Yedek almanın zamanı geldi (Ayarlar → Yedek al)";
+  storeBanner();
 }
 $("#nav").addEventListener("click",e=>{const b=e.target.closest("button[data-v]");if(b)go(b.dataset.v)});
 function go(v){current=v;try{history.replaceState(null,"","#"+v)}catch(e){}render();window.scrollTo(0,0)}
@@ -1344,11 +1359,11 @@ function vAyar(){
       const d=o&&o.data;if(!d||!Array.isArray(d.machines)||!Array.isArray(d.molds)||!Array.isArray(d.orders)){toast("Bu dosya bir PlanPres yedeği değil");return}
       const when=o.savedAt?fmtDT(new Date(o.savedAt)):"tarihsiz";$("#dataHint").innerHTML="";
       const b=document.createElement("button");b.className="btn btn-danger";b.type="button";b.textContent="Evet, yedeği yükle";
-      b.onclick=()=>{S=Object.assign({settings:{},machines:[],molds:[],bom:[],orders:[],overrides:{}},d);save();render();toast(`Yedek yüklendi (${when})`)};
+      b.onclick=()=>{storeErr=null;S=Object.assign({settings:{},machines:[],molds:[],bom:[],orders:[],overrides:{}},d);save();render();toast(`Yedek yüklendi (${when})`)};
       $("#dataHint").append(`${when} tarihli yedek: ${d.orders.length} sipariş, ${d.molds.length} kalıp, ${d.machines.length} makine. Mevcut veriler silinip bunlar yüklensin mi? `,b)};
     rd.onerror=()=>toast("Dosya okunamadı");rd.readAsText(f);e.target.value=""};
-  confirmBtn($("#resetDemo"),"Evet, örnek veriyi yükle",()=>{S=demo();save();render();toast("Örnek veri yüklendi")});
-  confirmBtn($("#wipe"),"Evet, temizle",()=>{S={demo:false,settings:S.settings,machines:[],molds:[],bom:[],orders:[],overrides:{}};save();render();toast("Kayıtlar temizlendi")});
+  confirmBtn($("#resetDemo"),"Evet, örnek veriyi yükle",()=>{storeErr=null;S=demo();save();render();toast("Örnek veri yüklendi")});
+  confirmBtn($("#wipe"),"Evet, temizle",()=>{storeErr=null;S={demo:false,settings:S.settings,machines:[],molds:[],bom:[],orders:[],overrides:{}};save();render();toast("Kayıtlar temizlendi")});
 }
 
 render();
