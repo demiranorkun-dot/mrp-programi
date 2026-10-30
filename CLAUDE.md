@@ -36,6 +36,9 @@ Kullanıcı: üretim planlama yöneticisi; uygulama ileride başka firmalara sat
 `production` (üretim gerçekleşmeleri), `overrides` / `seq` / `splits` (elle plan düzenlemeleri),
 `family` (aile kalıpları), `lastBackup`.
 
+İsteğe bağlı yeni alanlar (eski yedeklerde yoksa varsayılan kullanılır): `settings.batchDays` (sipariş birleştirme penceresi, gün; varsayılan 7, 0 = parça başına tek iş),
+`settings.usePrio` (öncelik sıralamada; varsayılan açık), `settings.holidays` ve `machines[].down` (tarih / `a..b` aralık metni, `dateSet()` ile okunur).
+
 ## Kurallar
 
 1. **Veri modelini bozma.** Mevcut alanları yeniden adlandırma, silme ya da anlamını değiştirme.

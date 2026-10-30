@@ -16,7 +16,7 @@ function loadApp(src) {
     globalThis.XLSX={utils:{sheet_to_json:ws=>ws}};
     ${grab('const DEF={', 'function cell(')}
     ${grab('function parseDate', 'function openPaste').replace(/function readWb[\s\S]*?function importAll/, 'function importAll').replace(/function importAll[\s\S]*/, '')}
-    ctx.api={get S(){return S},set S(v){S=v},demo,compute,DEF,SYN,pickSheet,sheetRows,headerRow,autoMap,convRow,pickCell,validRow,netHours,iso,parseISO,
+    ctx.api={get S(){return S},set S(v){S=v},demo,compute,dateSet:typeof dateSet!=='undefined'?dateSet:null,workDays,DEF,SYN,pickSheet,sheetRows,headerRow,autoMap,convRow,pickCell,validRow,netHours,iso,parseISO,
       Dash:typeof Dash!=='undefined'?Dash:null};`;
   new Function('ctx', code)(ctx);
   return ctx.api;

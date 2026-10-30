@@ -13,7 +13,7 @@ Bir seferde tek görev. Her görev ayrı dalda, testlerle birlikte. Durum: ⬜ a
 - ⬜ Mamul stok hareketleri: üretim girişi ile planlanan ihtiyaç arasındaki ilişki (çift sayım riski analiz edilmeli).
 
 ## Üretim planlama
-- ⬜ Makine bakım / arıza duruşlarının takvime kapalı zaman olarak girilmesi.
+- ✅ Makine bakım / arıza duruşlarının takvime kapalı zaman olarak girilmesi (makine kartı → Duruş günleri; fabrika tatilleri Ayarlar'da).
 - ⬜ Günlük iş emri çıktısı (ustabaşı için makine bazında liste).
 - ✅ Sipariş önceliğinin (öncelik alanı) sıralamaya etkisi — 1 acil · 2 normal · 3 düşük; Ayarlar'dan kapatılabilir.
 
